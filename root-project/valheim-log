@@ -1,0 +1,457 @@
+chris@fedora:~$ docker
+bash: docker: command not found...
+Packages providing this file are:
+'docker-cli'
+'podman-docker'
+chris@fedora:~$ dnf install docker-cli
+The requested operation requires superuser privileges. Please log in as a user with elevated rights, or use the "--assumeno" or "--downloadonly" options to run the command without modifying the system state.
+chris@fedora:~$ sudo dnf install docker-cli
+[sudo] password for chris: 
+Updating and loading repositories:
+Repositories loaded.
+Package                             Arch      Version                             Repository              Size
+Installing:
+ docker-cli                         x86_64    28.5.2-1.fc43                       updates             28.9 MiB
+Installing dependencies:
+ containerd                         x86_64    2.1.5-1.fc43                        updates             89.4 MiB
+ moby-filesystem                    noarch    28.5.2-1.fc43                       updates              0.0   B
+ pigz                               x86_64    2.8-7.fc43                          fedora             163.0 KiB
+ runc                               x86_64    2:1.3.3-1.fc43                      updates             12.7 MiB
+ tini-static                        x86_64    0.19.0-11.fc43                      fedora             774.1 KiB
+Installing weak dependencies:
+ docker-buildx                      x86_64    0.29.1-1.fc43                       updates             67.8 MiB
+ moby-engine                        x86_64    28.5.2-1.fc43                       updates             87.8 MiB
+ moby-engine-nano                   noarch    28.5.2-1.fc43                       updates            103.7 KiB
+
+Transaction Summary:
+ Installing:         9 packages
+
+Total size of inbound packages is 75 MiB. Need to download 75 MiB.
+After this operation, 288 MiB extra will be used (install 288 MiB, remove 0 B).
+Is this ok [y/N]: y
+[1/9] moby-filesystem-0:28.5.2-1.fc43.noarch                          100% |  13.0 KiB/s |  13.4 KiB |  00m01s
+[2/9] pigz-0:2.8-7.fc43.x86_64                                        100% |  95.3 KiB/s |  95.3 KiB |  00m01s
+[3/9] moby-engine-0:28.5.2-1.fc43.x86_64                              100% |   1.8 MiB/s |  19.4 MiB |  00m11s
+[4/9] containerd-0:2.1.5-1.fc43.x86_64                                100% |   2.0 MiB/s |  26.1 MiB |  00m13s
+[5/9] tini-static-0:0.19.0-11.fc43.x86_64                             100% | 479.0 KiB/s | 322.3 KiB |  00m01s
+[6/9] runc-2:1.3.3-1.fc43.x86_64                                      100% |   1.9 MiB/s |   3.7 MiB |  00m02s
+[7/9] moby-engine-nano-0:28.5.2-1.fc43.noarch                         100% | 523.2 KiB/s |  54.4 KiB |  00m00s
+[8/9] docker-cli-0:28.5.2-1.fc43.x86_64                               100% | 302.4 KiB/s |   8.3 MiB |  00m28s
+[9/9] docker-buildx-0:0.29.1-1.fc43.x86_64                                                                                                                                                                                                                                                                                                                                                        100% | 566.7 KiB/s |  16.7 MiB |  00m30s
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[9/9] Total                                                                                                                                                                                                                                                                                                                                                                                       100% |   2.3 MiB/s |  74.5 MiB |  00m33s
+Running transaction
+[ 1/11] Verify package files                                                                                                                                                                                                                                                                                                                                                                      100% |  58.0   B/s |   9.0   B |  00m00s
+[ 2/11] Prepare transaction                                                                                                                                                                                                                                                                                                                                                                       100% |  32.0   B/s |   9.0   B |  00m00s
+[ 3/11] Installing moby-filesystem-0:28.5.2-1.fc43.noarch                                                                                                                                                                                                                                                                                                                                         100% |  27.9 KiB/s | 400.0   B |  00m00s
+[ 4/11] Installing docker-cli-0:28.5.2-1.fc43.x86_64                                                                                                                                                                                                                                                                                                                                              100% | 392.2 MiB/s |  29.0 MiB |  00m00s
+[ 5/11] Installing runc-2:1.3.3-1.fc43.x86_64                                                                                                                                                                                                                                                                                                                                                     100% | 271.2 MiB/s |  12.7 MiB |  00m00s
+[ 6/11] Installing containerd-0:2.1.5-1.fc43.x86_64                                                                                                                                                                                                                                                                                                                                               100% | 497.0 MiB/s |  89.5 MiB |  00m00s
+[ 7/11] Installing tini-static-0:0.19.0-11.fc43.x86_64                                                                                                                                                                                                                                                                                                                                            100% |  44.5 MiB/s | 775.4 KiB |  00m00s
+[ 8/11] Installing pigz-0:2.8-7.fc43.x86_64                                                                                                                                                                                                                                                                                                                                                       100% |   2.0 MiB/s | 164.5 KiB |  00m00s
+>>> Running sysusers scriptlet: moby-engine-0:28.5.2-1.fc43.x86_64                                                                                                                                                                                                                                                                                                                                                                        
+>>> Finished sysusers scriptlet: moby-engine-0:28.5.2-1.fc43.x86_64                                                                                                                                                                                                                                                                                                                                                                       
+>>> Scriptlet output:                                                                                                                                                                                                                                                                                                                                                                                                                     
+>>> Creating group 'docker' with GID 965.                                                                                                                                                                                                                                                                                                                                                                                                 
+>>>                                                                                                                                                                                                                                                                                                                                                                                                                                       
+[ 9/11] Installing moby-engine-0:28.5.2-1.fc43.x86_64                                                                                                                                                                                                                                                                                                                                             100% | 520.5 MiB/s |  88.0 MiB |  00m00s
+>>> Running %post scriptlet: moby-engine-0:28.5.2-1.fc43.x86_64                                                                                                                                                                                                                                                                                                                                                                           
+>>> Finished %post scriptlet: moby-engine-0:28.5.2-1.fc43.x86_64                                                                                                                                                                                                                                                                                                                                                                          
+>>> Scriptlet output:                                                                                                                                                                                                                                                                                                                                                                                                                     
+>>> Created symlink '/etc/systemd/system/sockets.target.wants/docker.socket' → '/usr/lib/systemd/system/docker.socket'.                                                                                                                                                                                                                                                                                                                   
+>>>                                                                                                                                                                                                                                                                                                                                                                                                                                       
+[10/11] Installing docker-buildx-0:0.29.1-1.fc43.x86_64                                                                                                                                                                                                                                                                                                                                           100% | 600.7 MiB/s |  67.9 MiB |  00m00s
+[11/11] Installing moby-engine-nano-0:28.5.2-1.fc43.noarch                                                                                                                                                                                                                                                                                                                                        100% | 137.4 KiB/s | 104.5 KiB |  00m01s
+Complete!
+chris@fedora:~$ docker
+Usage:  docker [OPTIONS] COMMAND
+
+A self-sufficient runtime for containers
+
+Common Commands:
+  run         Create and run a new container from an image
+  exec        Execute a command in a running container
+  ps          List containers
+  build       Build an image from a Dockerfile
+  bake        Build from a file
+  pull        Download an image from a registry
+  push        Upload an image to a registry
+  images      List images
+  login       Authenticate to a registry
+  logout      Log out from a registry
+  search      Search Docker Hub for images
+  version     Show the Docker version information
+  info        Display system-wide information
+
+Management Commands:
+  builder     Manage builds
+  buildx*     Docker Buildx
+  checkpoint  Manage checkpoints
+  container   Manage containers
+  context     Manage contexts
+  image       Manage images
+  manifest    Manage Docker image manifests and manifest lists
+  network     Manage networks
+  plugin      Manage plugins
+  system      Manage Docker
+  trust       Manage trust on Docker images
+  volume      Manage volumes
+
+Swarm Commands:
+  config      Manage Swarm configs
+  node        Manage Swarm nodes
+  secret      Manage Swarm secrets
+  service     Manage Swarm services
+  stack       Manage Swarm stacks
+  swarm       Manage Swarm
+
+Commands:
+  attach      Attach local standard input, output, and error streams to a running container
+  commit      Create a new image from a container's changes
+  cp          Copy files/folders between a container and the local filesystem
+  create      Create a new container
+  diff        Inspect changes to files or directories on a container's filesystem
+  events      Get real time events from the server
+  export      Export a container's filesystem as a tar archive
+  history     Show the history of an image
+  import      Import the contents from a tarball to create a filesystem image
+  inspect     Return low-level information on Docker objects
+  kill        Kill one or more running containers
+  load        Load an image from a tar archive or STDIN
+  logs        Fetch the logs of a container
+  pause       Pause all processes within one or more containers
+  port        List port mappings or a specific mapping for the container
+  rename      Rename a container
+  restart     Restart one or more containers
+  rm          Remove one or more containers
+  rmi         Remove one or more images
+  save        Save one or more images to a tar archive (streamed to STDOUT by default)
+  start       Start one or more stopped containers
+  stats       Display a live stream of container(s) resource usage statistics
+  stop        Stop one or more running containers
+  tag         Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE
+  top         Display the running processes of a container
+  unpause     Unpause all processes within one or more containers
+  update      Update configuration of one or more containers
+  wait        Block until one or more containers stop, then print their exit codes
+
+Global Options:
+      --config string      Location of client config files (default "/home/chris/.docker")
+  -c, --context string     Name of the context to use to connect to the daemon (overrides DOCKER_HOST
+                           env var and default context set with "docker context use")
+  -D, --debug              Enable debug mode
+  -H, --host string        Daemon socket to connect to
+  -l, --log-level string   Set the logging level ("debug", "info", "warn", "error", "fatal") (default
+                           "info")
+      --tls                Use TLS; implied by --tlsverify
+      --tlscacert string   Trust certs signed only by this CA (default "/home/chris/.docker/ca.pem")
+      --tlscert string     Path to TLS certificate file (default "/home/chris/.docker/cert.pem")
+      --tlskey string      Path to TLS key file (default "/home/chris/.docker/key.pem")
+      --tlsverify          Use TLS and verify the remote
+  -v, --version            Print version information and quit
+
+Run 'docker COMMAND --help' for more information on a command.
+
+For more help on how to use Docker, head to https://docs.docker.com/go/guides/
+chris@fedora:~$ mkdir -p $HOME/valheim-server/config $HOME/valheim-server/data
+chris@fedora:~$ cd $HOME/valheim-server/
+chris@fedora:~/valheim-server$ cat > $HOME/valheim-server/valheim.env << EOF
+SERVER_NAME=My Server
+WORLD_NAME=Dedicated
+SERVER_PASS=secret
+SERVER_PUBLIC=true
+EOF
+chris@fedora:~/valheim-server$ curl -o $HOME/valheim-server/docker-compose.yaml https://raw.githubusercontent.com/lloesche/valheim-server-docker/main/docker-compose.yaml
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   368  100   368    0     0   2613      0 --:--:-- --:--:-- --:--:--  2628
+chris@fedora:~/valheim-server$ docker-compose up
+bash: docker-compose: command not found...
+Install package 'docker-compose-switch' to provide command 'docker-compose'? [N/y] n       
+
+
+chris@fedora:~/valheim-server$ docker compose up
+docker: unknown command: docker compose
+
+Run 'docker --help' for more information
+chris@fedora:~/valheim-server$ docker-compose up
+bash: docker-compose: command not found...
+Install package 'docker-compose-switch' to provide command 'docker-compose'? [N/y] y
+
+
+ * Waiting in queue... 
+ * Loading list of packages.... 
+The following packages have to be installed:
+ docker-compose-2.40.3-1.fc43.x86_64    Define and run multi-container applications with Docker
+ docker-compose-switch-1.0.5-6.fc43.x86_64      docker-compose CLI shim
+Proceed with changes? [N/y] y
+
+
+ * Waiting in queue... 
+ * Waiting for authentication... 
+ * Waiting in queue... 
+ * Downloading packages... 
+ * Requesting data... 
+ * Testing changes... 
+ * Installing packages... 
+unable to get image 'ghcr.io/lloesche/valheim-server': Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+
+chris@fedora:~/valheim-server$ sudo systemctl start docker
+chris@fedora:~/valheim-server$ sudo systemctl enable docker
+Created symlink '/etc/systemd/system/multi-user.target.wants/docker.service' → '/usr/lib/systemd/system/docker.service'.
+chris@fedora:~/valheim-server$ 
+
+
+
+! I logged out and logged back in to fix docker issues, but i probably just needed to use sudo !
+
+
+
+chris@fedora:~$ docker ps
+permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.51/containers/json": dial unix /var/run/docker.sock: connect: permission denied
+chris@fedora:~$ groups
+chris wheel nordvpn libvirt
+chris@fedora:~$ newgrp docker
+Password: 
+newgrp: failed to crypt password with previous salt: Invalid argument
+chris@fedora:~$ newgrp docker
+Password: 
+newgrp: failed to crypt password with previous salt: Invalid argument
+chris@fedora:~$ sudo systemctl start docker
+sudo systemctl enable docker
+[sudo] password for chris: 
+chris@fedora:~$ getent group docker
+docker:x:965:
+chris@fedora:~$ docker ps
+permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.51/containers/json": dial unix /var/run/docker.sock: connect: permission denied
+chris@fedora:~$ sudo docker compose pull
+no configuration file provided: not found
+chris@fedora:~$ ls
+ Art       Documents   Music       Pictures   recordings   steamlog.txt   valheim-server   webdev
+ Desktop   Downloads  'My Games'   Public     scripts      Templates      Videos
+chris@fedora:~$ cd valheim-server/
+chris@fedora:~/valheim-server$ ls
+config  data  docker-compose.yaml  valheim.env
+chris@fedora:~/valheim-server$ sudo docker compose pull
+[+] Pulling 8/8
+ ✔ valheim Pulled                                                                                      136.0s 
+   ✔ 55147cbf65d4 Pull complete                                                                         27.3s 
+   ✔ 27249e68718e Pull complete                                                                         62.0s 
+   ✔ 8d6018d519b4 Pull complete                                                                         62.1s 
+   ✔ 598ae5612445 Pull complete                                                                         62.1s 
+   ✔ 8f45a0bcc0ce Pull complete                                                                         62.4s 
+   ✔ 81c92112f447 Pull complete                                                                         62.5s 
+   ✔ 011675b6e382 Pull complete                                                                        135.0s 
+chris@fedora:~/valheim-server$ sudo docker compose up
+env file /root/valheim-server/valheim.env not found: stat /root/valheim-server/valheim.env: no such file or directory
+chris@fedora:~/valheim-server$ docker compose up
+unable to get image 'ghcr.io/lloesche/valheim-server': permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.51/images/ghcr.io/lloesche/valheim-server/json": dial unix /var/run/docker.sock: connect: permission denied
+chris@fedora:~/valheim-server$ sudo docker compose --env-file /home/chris/valheim-server/valheim.env up -d
+env file /root/valheim-server/valheim.env not found: stat /root/valheim-server/valheim.env: no such file or directory
+chris@fedora:~/valheim-server$ nano docker-compose
+chris@fedora:~/valheim-server$ ls
+config  data  docker-compose.yaml  valheim.env
+chris@fedora:~/valheim-server$ nano docker-compose.yaml
+chris@fedora:~/valheim-server$ sudo docker compose up
+[+] Running 2/2
+ ✔ Network valheim-server_default      Created                                                           0.1s 
+ ✔ Container valheim-server-valheim-1  Created                                                           0.1s 
+Attaching to valheim-1
+valheim-1  | INFO - Setting uid:gid of valheim to 0:0
+valheim-1  | chown: cannot read directory '/config': Permission denied
+valheim-1  | chown: cannot read directory '/opt/valheim': Permission denied
+valheim-1  | INFO - Setting timezone Etc/UTC
+valheim-1  | INFO - Setting up syslogd - logging to stdout
+valheim-1  | 2025-11-24 18:44:32,927 INFO Included extra file "/usr/local/etc/supervisor/conf.d/syslog.conf" during parsing
+valheim-1  | 2025-11-24 18:44:32,927 INFO Set uid to user 0 succeeded
+valheim-1  | 2025-11-24 18:44:32,928 INFO RPC interface 'supervisor' initialized
+valheim-1  | 2025-11-24 18:44:32,928 INFO supervisord started with pid 24
+valheim-1  | 2025-11-24 18:44:33,930 INFO spawned: 'syslogd' with pid 25
+valheim-1  | 2025-11-24 18:44:33,931 INFO spawned: 'crond' with pid 26
+valheim-1  | 2025-11-24 18:44:33,931 INFO spawned: 'valheim-bootstrap' with pid 27
+valheim-1  | Nov 24 18:44:33 syslogd started: BusyBox v1.36.1
+valheim-1  | 2025-11-24 18:44:33,933 INFO success: valheim-bootstrap entered RUNNING state, process has stayed up for > than 0 seconds (startsecs)
+valheim-1  | Nov 24 18:44:33 cron[26]: (CRON) INFO (pidfile fd = 3)
+valheim-1  | Nov 24 18:44:33 cron[26]: (CRON) INFO (Running @reboot jobs)
+valheim-1  | Nov 24 18:44:33 supervisord: valheim-bootstrap DEBUG - [27] - Running commit 20e6258cbff8aec8bd0eaf4b21fd9fe2c8747f3d
+valheim-1  | Nov 24 18:44:33 supervisord: valheim-bootstrap mkdir: cannot create directory ‘/opt/valheim/dl’: Permission denied
+valheim-1  | Nov 24 18:44:33 supervisord: valheim-bootstrap mkdir: cannot create directory ‘/opt/valheim/server’: Permission denied
+valheim-1  | Nov 24 18:44:33 supervisord: valheim-bootstrap DEBUG - [27] - Creating cron to do world backups using schedule 5 * * * *
+valheim-1  | Nov 24 18:44:33 supervisord: valheim-bootstrap DEBUG - [27] - Creating cron to check for updates using schedule */15 * * * *
+valheim-1  | Nov 24 18:44:33 supervisord: valheim-bootstrap DEBUG - [27] - Creating cron to restart valheim-server using schedule 10 5 * * *
+valheim-1  | Nov 24 18:44:33 crontab[34]: (root) REPLACE (root)
+valheim-1  | 2025-11-24 18:44:34,013 INFO spawned: 'valheim-updater' with pid 37
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater DEBUG - [37] - Running Valheim Server updater as user valheim uid 0
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater chmod: changing permissions of '/config': Permission denied
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater DEBUG - [37] - Kernel: Linux c85c6a6e2001 6.17.8-300.fc43.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Nov 14 01:47:12 UTC 2025 x86_64 GNU/Linux
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater DEBUG - [37] - Found CPU with 1975.076 MHz
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater DEBUG - [37] - Memory total/free/available: 65585428/56420304/60736548
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater DEBUG - [37] - Storage configuration:
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater Filesystem                                             Size  Used Avail Use% Mounted on
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater overlay                                                3.7T  252G  3.4T   7% /
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater /dev/mapper/luks-c822cd93-7c41-4d4c-bc5c-624c1fe9278b  3.7T  252G  3.4T   7% /config
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater overlay / overlay rw,context="system_u:object_r:container_file_t:s0:c895,c959",relatime,lowerdir=/var/lib/docker/overlay2/l/NJWRROFRAA2YTYVD4NNO3PV6FL:/var/lib/docker/overlay2/l/PY3BVYHX7N4BITFFOAYGLOFYK5:/var/lib/docker/overlay2/l/D6JOPURJOOSLB3UVVEDRKGWSKO:/var/lib/docker/overlay2/l/4IQPJ4VFFHFDT4V2LTD4BB4MGN:/var/lib/docker/overlay2/l/GLZUZSCAAEOUAIXETWZ7GFQDPT:/var/lib/docker/overlay2/l/T4BQKIT5BWSRK53446UA62VAJB:/var/lib/docker/overlay2/l/R3VZ52T5AK4HDXMCGJY6FDIXPT:/var/lib/docker/overlay2/l/ARCKYGZPOTBABGHGMP2YR5UNR5,upperdir=/var/lib/docker/overlay2/b0e97a48d9c32cb738628b9e8b9b28d7c6e8911d4a0369967c362de5e00ae912/diff,workdir=/var/lib/docker/overlay2/b0e97a48d9c32cb738628b9e8b9b28d7c6e8911d4a0369967c362de5e00ae912/work 0 0
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater /dev/mapper/luks-c822cd93-7c41-4d4c-bc5c-624c1fe9278b /config btrfs rw,seclabel,relatime,compress=zstd:1,ssd,discard=async,space_cache=v2,subvolid=256,subvol=/root 0 0
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater /dev/mapper/luks-c822cd93-7c41-4d4c-bc5c-624c1fe9278b /opt/valheim btrfs rw,seclabel,relatime,compress=zstd:1,ssd,discard=async,space_cache=v2,subvolid=256,subvol=/root 0 0
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater DEBUG - [37] - Valheim updater was just started - skipping connected players check
+valheim-1  | Nov 24 18:44:34 supervisord: valheim-updater INFO - Downloading/updating/validating Valheim server from Steam
+valheim-1  | 2025-11-24 18:44:35,086 INFO success: syslogd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+valheim-1  | 2025-11-24 18:44:35,086 INFO success: crond entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+valheim-1  | 2025-11-24 18:44:35,086 INFO success: valheim-updater entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+valheim-1  | Nov 24 18:44:35 supervisord: valheim-bootstrap valheim-updater: started
+valheim-1  | 2025-11-24 18:44:35,144 INFO spawned: 'valheim-backup' with pid 72
+valheim-1  | Nov 24 18:44:35 supervisord: valheim-backup INFO - No worlds to backup
+valheim-1  | Nov 24 18:44:35 supervisord: valheim-backup DEBUG - [72] - No old backups to remove
+valheim-1  | 2025-11-24 18:44:36,153 INFO success: valheim-backup entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+valheim-1  | Nov 24 18:44:36 supervisord: valheim-bootstrap valheim-backup: started
+valheim-1  | 2025-11-24 18:44:36,160 INFO exited: valheim-bootstrap (exit status 0; expected)
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater Redirecting stderr to '/home/valheim/Steam/logs/stderr.txt'
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater Logging directory: '/home/valheim/Steam/logs'
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [  0%] Checking for available updates...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [----] Downloading update (0 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [  0%] Downloading update (278 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [  0%] Downloading update (851 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [  1%] Downloading update (1,411 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [  2%] Downloading update (2,083 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [  3%] Downloading update (2,707 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [  5%] Downloading update (3,379 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [  6%] Downloading update (4,083 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [  7%] Downloading update (4,659 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [  8%] Downloading update (5,347 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 10%] Downloading update (6,003 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 11%] Downloading update (6,627 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 12%] Downloading update (7,299 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 13%] Downloading update (7,923 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 15%] Downloading update (8,572 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 16%] Downloading update (9,324 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 17%] Downloading update (9,916 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 18%] Downloading update (10,492 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 19%] Downloading update (11,212 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 21%] Downloading update (11,900 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 22%] Downloading update (12,556 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 23%] Downloading update (13,324 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 25%] Downloading update (13,996 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 26%] Downloading update (14,764 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 28%] Downloading update (15,388 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 29%] Downloading update (16,076 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 30%] Downloading update (16,828 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 31%] Downloading update (17,468 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 33%] Downloading update (18,156 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 34%] Downloading update (18,824 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 35%] Downloading update (19,432 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 36%] Downloading update (20,088 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 38%] Downloading update (20,808 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 39%] Downloading update (21,368 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 40%] Downloading update (21,912 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 41%] Downloading update (22,598 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 42%] Downloading update (23,222 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 44%] Downloading update (23,782 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 45%] Downloading update (24,470 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 46%] Downloading update (25,062 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 47%] Downloading update (25,782 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 48%] Downloading update (26,598 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 50%] Downloading update (27,158 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 51%] Downloading update (27,782 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 52%] Downloading update (28,486 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 54%] Downloading update (29,110 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 55%] Downloading update (29,750 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 56%] Downloading update (30,454 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 57%] Downloading update (31,110 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 59%] Downloading update (31,654 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 60%] Downloading update (32,294 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 61%] Downloading update (32,870 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 62%] Downloading update (33,478 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 63%] Downloading update (34,118 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 64%] Downloading update (34,674 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 65%] Downloading update (35,314 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 67%] Downloading update (36,002 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 68%] Downloading update (36,658 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 69%] Downloading update (37,234 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 70%] Downloading update (37,922 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 71%] Downloading update (38,530 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 73%] Downloading update (39,170 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 74%] Downloading update (39,858 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 75%] Downloading update (40,450 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 76%] Downloading update (41,074 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 77%] Downloading update (41,714 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 79%] Downloading update (42,258 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 80%] Downloading update (42,866 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 81%] Downloading update (43,538 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 82%] Downloading update (44,162 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 83%] Downloading update (44,786 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 85%] Downloading update (45,522 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 86%] Downloading update (46,226 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 87%] Downloading update (46,916 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 89%] Downloading update (47,345 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 89%] Downloading update (47,809 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 90%] Downloading update (48,209 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:54 supervisord: valheim-updater [ 91%] Downloading update (48,657 of 52,679 KB)
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater ...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [ 92%] Downloading update (49,073 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [ 93%] Downloading update (49,553 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [ 94%] Downloading update (49,969 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [ 94%] Downloading update (50,385 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [ 95%] Downloading update (50,833 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [ 96%] Downloading update (51,232 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [ 97%] Downloading update (51,664 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [ 98%] Downloading update (52,112 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [ 98%] Downloading update (52,528 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [ 99%] Downloading update (52,679 of 52,679 KB)...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [100%] Download complete.
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Installing update...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Extracting package...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Extracting package...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Extracting package...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Extracting package...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Installing update...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Installing update...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Installing update...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Installing update...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Installing update...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Installing update...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Installing update...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Installing update...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Installing update...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Cleaning up...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater [----] Update complete, launching Steamcmd...
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater UpdateUI: skip show logo
+valheim-1  | Nov 24 18:44:58 supervisord: valheim-updater steamcmd.sh[64]: Restarting steamcmd by request...
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater Redirecting stderr to '/home/valheim/Steam/logs/stderr.txt'
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater Logging directory: '/home/valheim/Steam/logs'
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater [  0%] Checking for available updates...
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater [----] Verifying installation...
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater UpdateUI: skip show logo
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater Steam Console Client (c) Valve Corporation - version 1763795194
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater -- type 'quit' to exit --
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater Loading Steam API...^[[0m
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater OK
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater ^[[0m
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater 
+valheim-1  | Nov 24 18:44:59 supervisord: valheim-updater Connecting anonymously to Steam Public...^[[0m
+valheim-1  | Nov 24 18:45:00 supervisord: valheim-updater OK
+valheim-1  | Nov 24 18:45:00 supervisord: valheim-updater ^[[0mWaiting for client config...^[[0m
+Gracefully Stopping... press Ctrl+C again to force
+ Container valheim-server-valheim-1  Stopping
+valheim-1  | 2025-11-24 18:45:01,908 WARN received SIGTERM indicating exit request
+valheim-1  | 2025-11-24 18:45:01,908 INFO waiting for syslogd, crond, valheim-backup, valheim-updater to die
+valheim-1  | Nov 24 18:45:01 CRON[111]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+valheim-1  | Nov 24 18:45:01 CRON[112]: (root) CMD ([ -f "/var/run/valheim/valheim-updater.pid" ] && kill -HUP $(cat /var/run/valheim/valheim-updater.pid))
+valheim-1  | Nov 24 18:45:01 supervisord: valheim-updater Terminated
+valheim-1  | Nov 24 18:45:01 supervisord: valheim-updater DEBUG - [37] - Received signal to shut down valheim-updater
+valheim-1  | Nov 24 18:45:01 supervisord: valheim-updater INFO - Releasing PID file /var/run/valheim/valheim-updater.pid
+valheim-1  | Nov 24 18:45:01 supervisord: valheim-updater ERROR - Failed to download Valheim server from Steam - retrying later - check your networking and volume access permissions
+valheim-1  | Nov 24 18:45:01 CRON[111]: (CRON) info (No MTA installed, discarding output)
+valheim-1  | Nov 24 18:45:01 CRON[111]: pam_unix(cron:session): session closed for user root
+valheim-1  | 2025-11-24 18:45:01,939 INFO stopped: valheim-updater (exit status 0)
+valheim-1  | Nov 24 18:45:01 supervisord: valheim-backup Terminated
+valheim-1  | Nov 24 18:45:01 supervisord: valheim-backup DEBUG - [72] - Received signal to shut down valheim-backup
+valheim-1  | Nov 24 18:45:01 supervisord: valheim-backup INFO - Releasing PID file /var/run/valheim/valheim-backup.pid
+valheim-1  | Nov 24 18:45:01 supervisord: valheim-backup ERROR - Error in line 34 command 'sleep 20' exited with code 143 in ::main::main called in line 158
+valheim-1  | 2025-11-24 18:45:01,941 INFO stopped: valheim-backup (exit status 0)
+valheim-1  | 2025-11-24 18:45:02,942 WARN stopped: crond (terminated by SIGTERM)
+valheim-1  | Nov 24 18:45:02 syslogd exiting
+valheim-1  | 2025-11-24 18:45:02,942 WARN stopped: syslogd (terminated by SIGTERM)
+ Container valheim-server-valheim-1  Stopped
+valheim-1 exited with code 0
+chris@fedora:~/valheim-server$ ^C
+chris@fedora:~/valheim-server$ 
