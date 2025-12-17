@@ -1,8 +1,8 @@
 # Photography Portfolio - Project Status
 
 **Last Updated:** 2025-12-17
-**Current Phase:** Phase 1 Complete → Ready for Phase 2
-**Branch:** phase-1
+**Current Phase:** Phase 2 Complete → Ready for Phase 3
+**Branch:** phase-2
 **Environment:** tmpfs (temporary filesystem - must commit regularly!)
 
 ---
@@ -11,7 +11,7 @@
 
 **Target:** Production-ready photography portfolio hosted on AWS S3 with CloudFront CDN
 
-**Progress:** ~25% (Bootstrap + Phase 1 complete, frontend scaffolded)
+**Progress:** ~40% (Phases 0, 1, 2 complete - full static hosting ready)
 
 ---
 
@@ -55,8 +55,8 @@
 |-------|--------|-------------|
 | **Phase 0** | ✅ **COMPLETE** | Terraform state backend (S3 + DynamoDB) |
 | **Phase 1** | ✅ **COMPLETE** | DNS & ACM Certificate (Route53 + SSL) |
-| **Phase 2** | ⏳ **NEXT** | Static site hosting (S3 + CloudFront CDN) |
-| **Phase 3** | ⏳ Pending | Cognito authentication (admin login) |
+| **Phase 2** | ✅ **COMPLETE** | Static site hosting (S3 + CloudFront CDN) |
+| **Phase 3** | ⏳ **NEXT** | Cognito authentication (admin login) |
 | **Phase 4** | ⏳ Pending | Photo upload S3 bucket |
 | **Phase 5** | ⏳ Pending | API Gateway + Lambda functions |
 | **Phase 6** | ⏳ Pending | Frontend integration with backend |
@@ -93,14 +93,50 @@
 3. Update nameservers at domain registrar
 4. Wait for DNS propagation (24-48 hours)
 
+### Phase 2 Details (COMPLETE - CODE READY)
+**Date Completed:** 2025-12-17
+**Status:** Code complete, deployment pending
+**Resources Defined:**
+- S3 bucket for static website (private, encrypted, versioned)
+- CloudFront Origin Access Control (OAC)
+- CloudFront distribution with custom domain + SSL
+- S3 bucket policy for CloudFront OAC access
+- Route53 A/AAAA records (apex + www)
+
+**Outputs Provided:**
+- `s3_bucket_name` - For uploading website files
+- `s3_bucket_arn` - Bucket ARN reference
+- `cloudfront_distribution_id` - For cache invalidation
+- `cloudfront_domain_name` - CloudFront endpoint
+- `website_url` - Final HTTPS website URL
+- `website_url_www` - www subdomain URL
+
+**Features:**
+- HTTPS enforcement (redirect HTTP to HTTPS)
+- SPA routing support (404/403 → index.html)
+- Gzip compression
+- IPv4 and IPv6 support
+- Global CDN (PriceClass_100: US, Canada, Europe)
+- Secure OAC access (no public S3 bucket)
+
+**Documentation:** `terraform/PHASE-2-SUMMARY.md`
+
+**Deployment Steps Required:**
+1. Ensure Phase 1 deployed (certificate = ISSUED)
+2. Run `terraform apply` to create S3 + CloudFront
+3. Build React app: `npm run build` in root-project/
+4. Upload to S3: `aws s3 sync dist/ s3://photography-project-website/`
+5. Visit https://yourdomain.com
+
 ---
 
 ## 🔄 Next Steps
 
-1. **Deploy Phase 1** - Run terraform apply for DNS/SSL setup
-2. **Configure Domain** - Update nameservers at registrar
-3. **Phase 2 Planning** - Design S3 + CloudFront static hosting
-4. **Phase 2 Implementation** - Static site infrastructure
+1. **Deploy Phases 1 & 2** - Run terraform apply for full stack
+2. **Configure Domain** - Update nameservers at registrar (if not done)
+3. **Upload Website** - Build React app and sync to S3
+4. **Phase 3 Planning** - Design Cognito authentication
+5. **Phase 3 Implementation** - Admin login infrastructure
 
 ---
 
@@ -127,7 +163,8 @@
 
 - **Phase 0 Only:** ~$0.30/month (S3 state + DynamoDB locks)
 - **After Phase 1:** ~$1.30/month (+$1 for Route53 hosted zone + queries)
-- **Projected Full Stack:** ~$1-2/month (includes all phases)
+- **After Phase 2:** ~$1.80/month (+$0.50 for S3 storage, CloudFront in free tier)
+- **Projected Full Stack:** ~$2-3/month (includes all phases)
 
 ---
 
@@ -137,8 +174,9 @@
 - State tracking files located in `.claude/` directory
 - Follow DEVELOPMENT_GUIDELINES.md for all code changes
 - Document architectural decisions in DECISIONS.md
-- Phase 1 code complete but not yet deployed
-- Certificate ARN needed for Phase 2 CloudFront setup
+- Phases 1 & 2 code complete but not yet deployed
+- Full static hosting infrastructure ready to deploy
+- React app needs to be built and uploaded after Phase 2 deployment
 
 ---
 
