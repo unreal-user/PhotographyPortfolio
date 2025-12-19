@@ -118,3 +118,63 @@ output "photos_dynamodb_table_arn" {
   description = "DynamoDB table ARN for IAM policies"
   value       = aws_dynamodb_table.photos.arn
 }
+
+# ==============================================================================
+# PHASE 5 OUTPUTS: Lambda Functions + API Gateway
+# ==============================================================================
+
+output "api_gateway_url" {
+  description = "API Gateway base URL"
+  value       = aws_api_gateway_stage.photos_api_stage.invoke_url
+}
+
+output "api_gateway_id" {
+  description = "API Gateway REST API ID"
+  value       = aws_api_gateway_rest_api.photos_api.id
+}
+
+output "api_gateway_stage" {
+  description = "API Gateway stage name"
+  value       = aws_api_gateway_stage.photos_api_stage.stage_name
+}
+
+output "api_endpoints" {
+  description = "All API endpoint URLs"
+  value = {
+    generate_upload_url = "${aws_api_gateway_stage.photos_api_stage.invoke_url}/photos/upload-url"
+    create_photo        = "${aws_api_gateway_stage.photos_api_stage.invoke_url}/photos"
+    list_photos         = "${aws_api_gateway_stage.photos_api_stage.invoke_url}/photos"
+    get_photo           = "${aws_api_gateway_stage.photos_api_stage.invoke_url}/photos/{photoId}"
+    update_photo        = "${aws_api_gateway_stage.photos_api_stage.invoke_url}/photos/{photoId}"
+    delete_photo        = "${aws_api_gateway_stage.photos_api_stage.invoke_url}/photos/{photoId}"
+  }
+}
+
+output "lambda_function_arns" {
+  description = "Lambda function ARNs"
+  value = {
+    generate_upload_url = aws_lambda_function.generate_upload_url.arn
+    create_photo        = aws_lambda_function.create_photo.arn
+    list_photos         = aws_lambda_function.list_photos.arn
+    get_photo           = aws_lambda_function.get_photo.arn
+    update_photo        = aws_lambda_function.update_photo.arn
+    delete_photo        = aws_lambda_function.delete_photo.arn
+  }
+}
+
+output "lambda_function_names" {
+  description = "Lambda function names"
+  value = {
+    generate_upload_url = aws_lambda_function.generate_upload_url.function_name
+    create_photo        = aws_lambda_function.create_photo.function_name
+    list_photos         = aws_lambda_function.list_photos.function_name
+    get_photo           = aws_lambda_function.get_photo.function_name
+    update_photo        = aws_lambda_function.update_photo.function_name
+    delete_photo        = aws_lambda_function.delete_photo.function_name
+  }
+}
+
+output "cognito_authorizer_id" {
+  description = "API Gateway Cognito authorizer ID"
+  value       = aws_api_gateway_authorizer.cognito_authorizer.id
+}

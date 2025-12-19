@@ -590,3 +590,833 @@ resource "aws_dynamodb_table" "photos" {
     Phase       = "4"
   }
 }
+
+# ==============================================================================
+# PHASE 5: Lambda Functions + API Gateway
+# ==============================================================================
+
+# ----------------------------------------------------------------------------
+# Lambda IAM Roles & Policies
+# ----------------------------------------------------------------------------
+
+# IAM role for Lambda functions
+resource "aws_iam_role" "lambda_execution_role" {
+  name = "${var.project_name}-lambda-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project_name}-lambda-execution-role"
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+# Attach basic Lambda execution policy (CloudWatch Logs)
+resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+# IAM policy for S3 upload access
+resource "aws_iam_policy" "lambda_s3_upload_policy" {
+  name        = "${var.project_name}-lambda-s3-upload-policy"
+  description = "Allow Lambda to generate pre-signed URLs for S3 uploads"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject"
+        ]
+        Resource = "${aws_s3_bucket.photos.arn}/uploads/*"
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project_name}-lambda-s3-upload-policy"
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_s3_upload" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = aws_iam_policy.lambda_s3_upload_policy.arn
+}
+
+# IAM policy for S3 read/copy access
+resource "aws_iam_policy" "lambda_s3_copy_policy" {
+  name        = "${var.project_name}-lambda-s3-copy-policy"
+  description = "Allow Lambda to copy objects between S3 folders"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:HeadObject",
+          "s3:GetObject"
+        ]
+        Resource = [
+          "${aws_s3_bucket.photos.arn}/uploads/*",
+          "${aws_s3_bucket.photos.arn}/originals/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:CopyObject"
+        ]
+        Resource = [
+          "${aws_s3_bucket.photos.arn}/originals/*",
+          "${aws_s3_bucket.photos.arn}/archive/*"
+        ]
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project_name}-lambda-s3-copy-policy"
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_s3_copy" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = aws_iam_policy.lambda_s3_copy_policy.arn
+}
+
+# IAM policy for DynamoDB access
+resource "aws_iam_policy" "lambda_dynamodb_policy" {
+  name        = "${var.project_name}-lambda-dynamodb-policy"
+  description = "Allow Lambda to read/write DynamoDB photo metadata"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Query"
+        ]
+        Resource = [
+          aws_dynamodb_table.photos.arn,
+          "${aws_dynamodb_table.photos.arn}/index/status-uploadDate-index"
+        ]
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project_name}-lambda-dynamodb-policy"
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_dynamodb" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = aws_iam_policy.lambda_dynamodb_policy.arn
+}
+
+# ====================
+# CloudWatch Log Groups for Lambda Functions
+# ====================
+
+resource "aws_cloudwatch_log_group" "generate_upload_url_logs" {
+  name              = "/aws/lambda/photography-project-generate-upload-url"
+  retention_in_days = 14
+
+  tags = {
+    Name        = "photography-project-generate-upload-url-logs"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "create_photo_logs" {
+  name              = "/aws/lambda/photography-project-create-photo"
+  retention_in_days = 14
+
+  tags = {
+    Name        = "photography-project-create-photo-logs"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "list_photos_logs" {
+  name              = "/aws/lambda/photography-project-list-photos"
+  retention_in_days = 14
+
+  tags = {
+    Name        = "photography-project-list-photos-logs"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "get_photo_logs" {
+  name              = "/aws/lambda/photography-project-get-photo"
+  retention_in_days = 14
+
+  tags = {
+    Name        = "photography-project-get-photo-logs"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "update_photo_logs" {
+  name              = "/aws/lambda/photography-project-update-photo"
+  retention_in_days = 14
+
+  tags = {
+    Name        = "photography-project-update-photo-logs"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "delete_photo_logs" {
+  name              = "/aws/lambda/photography-project-delete-photo"
+  retention_in_days = 14
+
+  tags = {
+    Name        = "photography-project-delete-photo-logs"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+# ====================
+# Lambda Functions
+# ====================
+
+resource "aws_lambda_function" "generate_upload_url" {
+  filename      = "${path.module}/generate_upload_url.zip"
+  function_name = "photography-project-generate-upload-url"
+  role          = aws_iam_role.lambda_execution_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.12"
+  timeout       = 10
+  memory_size   = 128
+
+  source_code_hash = filebase64sha256("${path.module}/generate_upload_url.zip")
+
+  environment {
+    variables = {
+      PHOTOS_BUCKET_NAME  = aws_s3_bucket.photos.id
+      UPLOAD_EXPIRATION   = "300"
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.generate_upload_url_logs,
+    aws_iam_role_policy_attachment.lambda_basic_execution,
+    aws_iam_role_policy_attachment.lambda_s3_upload
+  ]
+
+  tags = {
+    Name        = "photography-project-generate-upload-url"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_lambda_function" "create_photo" {
+  filename      = "${path.module}/create_photo.zip"
+  function_name = "photography-project-create-photo"
+  role          = aws_iam_role.lambda_execution_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.12"
+  timeout       = 10
+  memory_size   = 128
+
+  source_code_hash = filebase64sha256("${path.module}/create_photo.zip")
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE_NAME = aws_dynamodb_table.photos.name
+      PHOTOS_BUCKET_NAME  = aws_s3_bucket.photos.id
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.create_photo_logs,
+    aws_iam_role_policy_attachment.lambda_basic_execution,
+    aws_iam_role_policy_attachment.lambda_dynamodb,
+    aws_iam_role_policy_attachment.lambda_s3_upload
+  ]
+
+  tags = {
+    Name        = "photography-project-create-photo"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_lambda_function" "list_photos" {
+  filename      = "${path.module}/list_photos.zip"
+  function_name = "photography-project-list-photos"
+  role          = aws_iam_role.lambda_execution_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.12"
+  timeout       = 10
+  memory_size   = 128
+
+  source_code_hash = filebase64sha256("${path.module}/list_photos.zip")
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE_NAME = aws_dynamodb_table.photos.name
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.list_photos_logs,
+    aws_iam_role_policy_attachment.lambda_basic_execution,
+    aws_iam_role_policy_attachment.lambda_dynamodb
+  ]
+
+  tags = {
+    Name        = "photography-project-list-photos"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_lambda_function" "get_photo" {
+  filename      = "${path.module}/get_photo.zip"
+  function_name = "photography-project-get-photo"
+  role          = aws_iam_role.lambda_execution_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.12"
+  timeout       = 10
+  memory_size   = 128
+
+  source_code_hash = filebase64sha256("${path.module}/get_photo.zip")
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE_NAME = aws_dynamodb_table.photos.name
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.get_photo_logs,
+    aws_iam_role_policy_attachment.lambda_basic_execution,
+    aws_iam_role_policy_attachment.lambda_dynamodb
+  ]
+
+  tags = {
+    Name        = "photography-project-get-photo"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_lambda_function" "update_photo" {
+  filename      = "${path.module}/update_photo.zip"
+  function_name = "photography-project-update-photo"
+  role          = aws_iam_role.lambda_execution_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.12"
+  timeout       = 10
+  memory_size   = 128
+
+  source_code_hash = filebase64sha256("${path.module}/update_photo.zip")
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE_NAME = aws_dynamodb_table.photos.name
+      PHOTOS_BUCKET_NAME  = aws_s3_bucket.photos.id
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.update_photo_logs,
+    aws_iam_role_policy_attachment.lambda_basic_execution,
+    aws_iam_role_policy_attachment.lambda_dynamodb,
+    aws_iam_role_policy_attachment.lambda_s3_copy
+  ]
+
+  tags = {
+    Name        = "photography-project-update-photo"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+resource "aws_lambda_function" "delete_photo" {
+  filename      = "${path.module}/delete_photo.zip"
+  function_name = "photography-project-delete-photo"
+  role          = aws_iam_role.lambda_execution_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.12"
+  timeout       = 10
+  memory_size   = 128
+
+  source_code_hash = filebase64sha256("${path.module}/delete_photo.zip")
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE_NAME = aws_dynamodb_table.photos.name
+      PHOTOS_BUCKET_NAME  = aws_s3_bucket.photos.id
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.delete_photo_logs,
+    aws_iam_role_policy_attachment.lambda_basic_execution,
+    aws_iam_role_policy_attachment.lambda_dynamodb,
+    aws_iam_role_policy_attachment.lambda_s3_copy
+  ]
+
+  tags = {
+    Name        = "photography-project-delete-photo"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+# ====================
+# API Gateway REST API
+# ====================
+
+resource "aws_api_gateway_rest_api" "photos_api" {
+  name        = "photography-project-api"
+  description = "Photo management API for Photography Portfolio"
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+
+  tags = {
+    Name        = "photography-project-api"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}
+
+# Cognito Authorizer
+resource "aws_api_gateway_authorizer" "cognito_authorizer" {
+  name            = "cognito-authorizer"
+  rest_api_id     = aws_api_gateway_rest_api.photos_api.id
+  type            = "COGNITO_USER_POOLS"
+  provider_arns   = [aws_cognito_user_pool.admin_pool.arn]
+  identity_source = "method.request.header.Authorization"
+}
+
+# ====================
+# API Gateway Resources (Paths)
+# ====================
+
+# /photos
+resource "aws_api_gateway_resource" "photos" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  parent_id   = aws_api_gateway_rest_api.photos_api.root_resource_id
+  path_part   = "photos"
+}
+
+# /photos/upload-url
+resource "aws_api_gateway_resource" "upload_url" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  parent_id   = aws_api_gateway_resource.photos.id
+  path_part   = "upload-url"
+}
+
+# /photos/{photoId}
+resource "aws_api_gateway_resource" "photo_by_id" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  parent_id   = aws_api_gateway_resource.photos.id
+  path_part   = "{photoId}"
+}
+
+# ====================
+# API Gateway Methods & Integrations
+# ====================
+
+# POST /photos/upload-url
+resource "aws_api_gateway_method" "generate_upload_url_post" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.upload_url.id
+  http_method   = "POST"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+}
+
+resource "aws_api_gateway_integration" "generate_upload_url_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.photos_api.id
+  resource_id             = aws_api_gateway_resource.upload_url.id
+  http_method             = aws_api_gateway_method.generate_upload_url_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.generate_upload_url.invoke_arn
+}
+
+# POST /photos
+resource "aws_api_gateway_method" "create_photo_post" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.photos.id
+  http_method   = "POST"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+}
+
+resource "aws_api_gateway_integration" "create_photo_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.photos_api.id
+  resource_id             = aws_api_gateway_resource.photos.id
+  http_method             = aws_api_gateway_method.create_photo_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.create_photo.invoke_arn
+}
+
+# GET /photos
+resource "aws_api_gateway_method" "list_photos_get" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.photos.id
+  http_method   = "GET"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+}
+
+resource "aws_api_gateway_integration" "list_photos_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.photos_api.id
+  resource_id             = aws_api_gateway_resource.photos.id
+  http_method             = aws_api_gateway_method.list_photos_get.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.list_photos.invoke_arn
+}
+
+# GET /photos/{photoId}
+resource "aws_api_gateway_method" "get_photo_get" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.photo_by_id.id
+  http_method   = "GET"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+}
+
+resource "aws_api_gateway_integration" "get_photo_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.photos_api.id
+  resource_id             = aws_api_gateway_resource.photo_by_id.id
+  http_method             = aws_api_gateway_method.get_photo_get.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.get_photo.invoke_arn
+}
+
+# PATCH /photos/{photoId}
+resource "aws_api_gateway_method" "update_photo_patch" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.photo_by_id.id
+  http_method   = "PATCH"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+}
+
+resource "aws_api_gateway_integration" "update_photo_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.photos_api.id
+  resource_id             = aws_api_gateway_resource.photo_by_id.id
+  http_method             = aws_api_gateway_method.update_photo_patch.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.update_photo.invoke_arn
+}
+
+# DELETE /photos/{photoId}
+resource "aws_api_gateway_method" "delete_photo_delete" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.photo_by_id.id
+  http_method   = "DELETE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+}
+
+resource "aws_api_gateway_integration" "delete_photo_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.photos_api.id
+  resource_id             = aws_api_gateway_resource.photo_by_id.id
+  http_method             = aws_api_gateway_method.delete_photo_delete.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.delete_photo.invoke_arn
+}
+
+# ====================
+# Lambda Permissions for API Gateway
+# ====================
+
+resource "aws_lambda_permission" "api_gateway_generate_upload_url" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.generate_upload_url.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "api_gateway_create_photo" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.create_photo.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "api_gateway_list_photos" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.list_photos.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "api_gateway_get_photo" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.get_photo.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "api_gateway_update_photo" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.update_photo.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "api_gateway_delete_photo" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.delete_photo.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
+}
+
+# ====================
+# CORS Configuration
+# ====================
+
+# OPTIONS /photos/upload-url (CORS)
+resource "aws_api_gateway_method" "upload_url_options" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.upload_url.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "upload_url_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.upload_url.id
+  http_method = aws_api_gateway_method.upload_url_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "upload_url_options_response" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.upload_url.id
+  http_method = aws_api_gateway_method.upload_url_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "upload_url_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.upload_url.id
+  http_method = aws_api_gateway_method.upload_url_options.http_method
+  status_code = aws_api_gateway_method_response.upload_url_options_response.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_integration.upload_url_options_integration]
+}
+
+# OPTIONS /photos (CORS)
+resource "aws_api_gateway_method" "photos_options" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.photos.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "photos_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.photos.id
+  http_method = aws_api_gateway_method.photos_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "photos_options_response" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.photos.id
+  http_method = aws_api_gateway_method.photos_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "photos_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.photos.id
+  http_method = aws_api_gateway_method.photos_options.http_method
+  status_code = aws_api_gateway_method_response.photos_options_response.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_integration.photos_options_integration]
+}
+
+# OPTIONS /photos/{photoId} (CORS)
+resource "aws_api_gateway_method" "photo_by_id_options" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.photo_by_id.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "photo_by_id_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.photo_by_id.id
+  http_method = aws_api_gateway_method.photo_by_id_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "photo_by_id_options_response" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.photo_by_id.id
+  http_method = aws_api_gateway_method.photo_by_id_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "photo_by_id_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.photo_by_id.id
+  http_method = aws_api_gateway_method.photo_by_id_options.http_method
+  status_code = aws_api_gateway_method_response.photo_by_id_options_response.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,PATCH,DELETE,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [aws_api_gateway_integration.photo_by_id_options_integration]
+}
+
+# ====================
+# API Gateway Deployment & Stage
+# ====================
+
+resource "aws_api_gateway_deployment" "photos_api_deployment" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+
+  depends_on = [
+    aws_api_gateway_integration.generate_upload_url_integration,
+    aws_api_gateway_integration.create_photo_integration,
+    aws_api_gateway_integration.list_photos_integration,
+    aws_api_gateway_integration.get_photo_integration,
+    aws_api_gateway_integration.update_photo_integration,
+    aws_api_gateway_integration.delete_photo_integration,
+    aws_api_gateway_integration_response.upload_url_options_integration_response,
+    aws_api_gateway_integration_response.photos_options_integration_response,
+    aws_api_gateway_integration_response.photo_by_id_options_integration_response
+  ]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_api_gateway_stage" "photos_api_stage" {
+  deployment_id = aws_api_gateway_deployment.photos_api_deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  stage_name    = "prod"
+
+  tags = {
+    Name        = "photography-project-api-prod"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "5"
+  }
+}

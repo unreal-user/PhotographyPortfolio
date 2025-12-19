@@ -217,6 +217,204 @@ interface Photo {
 
 ---
 
+### ADR-012: Phase 5 Lambda Functions + API Gateway Architecture
+**Date:** 2025-12-19
+**Status:** ✅ Accepted
+
+**Decision:** One Lambda function per endpoint (6 functions) + REST API Gateway + Cognito authorizer
+
+**Context:** Phase 5 adds serverless backend API for photo management. Key questions:
+1. Lambda architecture (monolithic vs one-per-endpoint)
+2. API Gateway type (REST API vs HTTP API)
+3. Authorization method (Cognito authorizer vs Lambda authorizer)
+4. Lambda runtime and deployment strategy
+5. IAM policy structure
+
+**Decisions Made:**
+
+**1. One Lambda per Endpoint (over monolithic Lambda)**
+- Rationale: Better debugging, error isolation, least-privilege IAM policies
+- Approach: 6 Lambda functions (generate-upload-url, create-photo, list-photos, get-photo, update-photo, delete-photo)
+- YAGNI principle: No shared code, no frameworks, simple Python functions
+- Trade-off: More Terraform resources (~60 vs ~20), but better maintainability and debugging
+
+**2. REST API Gateway (over HTTP API)**
+- Rationale: Full feature set, Cognito authorizer support (HTTP API requires JWT authorizer)
+- Features: Request validation, CORS, stage management, throttling
+- Trade-off: Slightly higher cost (~$3.50/million vs $1/million), but negligible for low traffic
+
+**3. Cognito User Pool Authorizer (over Lambda authorizer)**
+- Rationale: Simpler implementation, no custom auth code, integrates with Phase 3 Cognito
+- Security: JWT validation handled by API Gateway automatically
+- Trade-off: Coupled to AWS Cognito, but already committed in Phase 3
+
+**4. Python 3.12 Runtime (over Node.js/inline code)**
+- Rationale: Team familiarity, boto3 (AWS SDK) included by default, simple deployment
+- Deployment: ZIP files (no layers needed for simple functions)
+- Trade-off: Cold start slightly slower than Node.js, but acceptable for admin-only API
+
+**5. Separate IAM Policies by Permission Type**
+- Approach: 3 policies (S3 upload, S3 copy, DynamoDB) attached per-function as needed
+- Rationale: Least-privilege security, clear separation of concerns
+- Trade-off: More policy resources, but better security posture
+
+**Lambda Functions Implemented:**
+
+1. **generate-upload-url** (POST /photos/upload-url)
+   - Generate pre-signed S3 URLs for browser uploads
+   - Validation: File type (JPEG/PNG/WebP), size (max 10MB)
+   - IAM: s3:PutObject on uploads/*
+   - Output: {uploadUrl, photoId, s3Key, expiresAt}
+
+2. **create-photo** (POST /photos)
+   - Save photo metadata to DynamoDB after S3 upload
+   - Validation: Required fields (photoId, title, alt, copyright), UUID format
+   - IAM: dynamodb:PutItem, s3:HeadObject
+   - Creates with status="pending"
+
+3. **list-photos** (GET /photos?status={status})
+   - Query photos by status using DynamoDB GSI
+   - Supports pagination with limit parameter
+   - IAM: dynamodb:Query on table + GSI
+   - Returns array sorted by uploadDate (newest first)
+
+4. **get-photo** (GET /photos/{photoId})
+   - Retrieve single photo metadata by photoId
+   - IAM: dynamodb:GetItem
+   - Returns full photo object or 404
+
+5. **update-photo** (PATCH /photos/{photoId})
+   - Update metadata and handle status transitions
+   - Workflow: If status changes to "published", copy from uploads/ to originals/
+   - IAM: dynamodb:GetItem + UpdateItem, s3:CopyObject
+   - Updates publishedAt/archivedAt timestamps
+
+6. **delete-photo** (DELETE /photos/{photoId})
+   - Soft delete (move to archive/, set status="archived")
+   - Workflow: Copy from originals/ to archive/, update DynamoDB
+   - IAM: dynamodb:GetItem + UpdateItem, s3:CopyObject
+   - Preserves data for potential recovery
+
+**API Gateway Configuration:**
+- REST API: `photography-project-api`
+- Stage: `prod`
+- CORS: Enabled for production domains (*.test.com)
+- Resources: 3 paths (/photos, /photos/upload-url, /photos/{photoId})
+- Methods: POST, GET, PATCH, DELETE + OPTIONS (CORS)
+- Integration: Lambda proxy integration (AWS_PROXY type)
+- Authorization: Cognito JWT on all endpoints (except OPTIONS)
+
+**CloudWatch Configuration:**
+- Log groups: 6 (one per function)
+- Retention: 14 days (balance cost vs debugging needs)
+- Naming: `/aws/lambda/photography-project-{function-name}`
+
+**Photo Lifecycle Workflow:**
+```
+1. Generate Upload URL (pre-signed S3 URL for uploads/)
+   ↓
+2. Upload to S3 (browser direct upload)
+   ↓
+3. Create Metadata (DynamoDB with status="pending")
+   ↓
+4. Publish (PATCH status → "published", S3 copy: uploads/ → originals/)
+   ↓
+5. Archive (DELETE, S3 copy: originals/ → archive/, status → "archived")
+```
+
+**Validation Rules:**
+- File types: JPEG, PNG, WebP only
+- File size: Max 10MB
+- photoId: UUID v4 format (RFC 4122)
+- Required fields: title, alt, copyright
+- Status values: "pending", "published", "archived"
+
+**Error Handling:**
+- 400 Bad Request: Invalid input, validation errors
+- 401 Unauthorized: Missing/invalid JWT (API Gateway handles)
+- 404 Not Found: Photo doesn't exist
+- 500 Internal Server Error: Lambda errors
+
+**Alternatives Considered:**
+
+1. **Monolithic Lambda with routing** - Single function, router logic
+   - Pros: Fewer resources, shared code
+   - Cons: Harder debugging, all-or-nothing IAM, complex error isolation
+   - Rejected: YAGNI, debugging complexity not worth it
+
+2. **HTTP API Gateway** - Simpler, cheaper API type
+   - Pros: Lower cost, faster
+   - Cons: No Cognito authorizer, must use JWT authorizer with custom Lambda
+   - Rejected: Cost savings negligible, Cognito integration important
+
+3. **Lambda authorizer** - Custom auth logic
+   - Pros: More control, can add custom claims
+   - Cons: Extra code, more complexity, reinventing Cognito JWT validation
+   - Rejected: Cognito authorizer simpler and built-in
+
+4. **Node.js runtime** - JavaScript Lambda functions
+   - Pros: Faster cold starts, smaller bundle
+   - Cons: Must install AWS SDK, team less familiar
+   - Rejected: Python simpler, boto3 included by default
+
+5. **Inline Lambda code in Terraform** - No ZIP files
+   - Pros: Simpler deployment (no build step)
+   - Cons: Limited to simple functions, hard to test locally, no dependencies
+   - Rejected: Python files easier to test and maintain
+
+6. **Lambda layers** - Shared dependencies
+   - Pros: Smaller function packages, shared code
+   - Cons: More complexity, not needed for simple functions
+   - Rejected: YAGNI, no shared dependencies
+
+**Consequences:**
+- 6 Lambda functions provide clear separation and debugging
+- ~60 Terraform resources (vs ~20 for monolithic), but better maintainability
+- CloudWatch logs per function enable targeted debugging
+- Least-privilege IAM policies improve security posture
+- Pre-signed URLs enable direct browser-to-S3 uploads (no Lambda proxy)
+- Photo lifecycle workflow enforced at API layer
+- API Gateway + Cognito handle all auth (no custom auth code)
+
+**Security Features:**
+- Cognito JWT authorizer on all endpoints
+- Pre-signed URLs expire after 5 minutes
+- Least-privilege IAM policies per function type
+- CORS restricted to production domains
+- HTTPS-only (enforced by API Gateway + S3 bucket policy)
+- CloudWatch logging for audit trail
+- No credentials in frontend code
+
+**Cost Impact:**
+- Lambda: $0.00/month (free tier: 1M requests, 400K GB-seconds)
+- API Gateway: ~$0.01/month (3,000 requests @ $3.50/million after free tier)
+- CloudWatch Logs: ~$0.01/month (10MB logs @ $0.50/GB)
+- **Total: ~$0.02/month** (cumulative: ~$1.84/month for Phases 0-5)
+
+**Phase 6 Preparation:**
+- API Gateway base URL available via Terraform output
+- JWT tokens from Cognito ready for authorization
+- API client service can be built in frontend
+- Environment variables for frontend (VITE_API_URL)
+- Upload workflow ready:
+  1. Call generateUploadUrl()
+  2. Upload file to S3 using pre-signed URL
+  3. Call createPhoto() with metadata
+  4. Photo appears in admin dashboard
+
+**Resources Created:**
+- 6 Lambda functions (Python 3.12, 128MB, 10s timeout)
+- 6 CloudWatch log groups (14-day retention)
+- 1 IAM execution role + 3 policies + 4 attachments
+- 1 REST API Gateway + 1 stage
+- 1 Cognito authorizer
+- 3 API resources + 6 methods + 6 integrations
+- 6 Lambda permissions
+- 3 CORS OPTIONS methods (9 resources)
+- 1 deployment
+
+---
+
 ## Decision Template
 
 ```markdown

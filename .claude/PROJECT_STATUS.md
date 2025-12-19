@@ -1,8 +1,8 @@
 # Photography Portfolio - Project Status
 
 **Last Updated:** 2025-12-19
-**Current Phase:** Phase 4 Complete → Ready for Phase 5
-**Branch:** phase-4
+**Current Phase:** Phase 5 Complete → Ready for Phase 6
+**Branch:** phase-5
 **Environment:** tmpfs (temporary filesystem - must commit regularly!)
 
 ---
@@ -11,7 +11,7 @@
 
 **Target:** Production-ready photography portfolio hosted on AWS S3 with CloudFront CDN
 
-**Progress:** ~65% (Phases 0, 1, 2, 3, 4 complete - photo storage infrastructure ready)
+**Progress:** ~75% (Phases 0-5 complete - full backend API ready)
 
 ---
 
@@ -60,9 +60,10 @@
 | **Phase 2** | ✅ **COMPLETE** | Static site hosting (S3 + CloudFront CDN) |
 | **Phase 3** | ✅ **COMPLETE** | Cognito authentication (admin login) |
 | **Phase 4** | ✅ **COMPLETE** | Photo storage (S3 + DynamoDB) |
-| **Phase 5** | ⏳ **NEXT** | API Gateway + Lambda functions |
-| **Phase 6** | ⏳ Pending | Frontend integration with backend |
-| **Phase 7** | ⏳ Pending | CI/CD deployment pipeline |
+| **Phase 5** | ✅ **COMPLETE** | API Gateway + Lambda functions |
+| **Phase 6** | ⏳ **NEXT** | Frontend integration with backend (admin dashboard) |
+| **Phase 7** | ⏳ Pending | Image processing + thumbnails (Lambda Layer) |
+| **Phase 8** | ⏳ Pending | CI/CD deployment pipeline |
 
 ### Phase 0 Details (COMPLETE)
 **Date Completed:** Prior to 2025-12-17
@@ -224,15 +225,73 @@
 3. Verify DynamoDB table (indexes, point-in-time recovery)
 4. Test DynamoDB write/read operations
 
+### Phase 5 Details (COMPLETE - CODE READY)
+**Date Completed:** 2025-12-19
+**Status:** Code complete, deployment pending
+**Resources Defined:**
+- 6 Lambda functions (Python 3.12)
+- 6 CloudWatch log groups (14-day retention)
+- IAM execution role + 3 policies (S3 upload, S3 copy, DynamoDB)
+- API Gateway REST API (photography-project-api)
+- Cognito authorizer (JWT-based)
+- 3 API Gateway resources (/photos, /photos/upload-url, /photos/{photoId})
+- 6 API methods + integrations (POST, GET, PATCH, DELETE)
+- 6 Lambda permissions
+- 3 CORS OPTIONS methods
+- API deployment + prod stage
+
+**Lambda Functions:**
+1. **generate-upload-url** - Generate pre-signed S3 URLs for browser uploads
+2. **create-photo** - Save photo metadata to DynamoDB after upload
+3. **list-photos** - Query photos by status using GSI
+4. **get-photo** - Retrieve single photo metadata
+5. **update-photo** - Update metadata, handle status transitions (pending → published)
+6. **delete-photo** - Soft delete (move to archive/)
+
+**Outputs Provided:**
+- `api_gateway_url` - API base URL for frontend
+- `api_gateway_id` - REST API ID
+- `api_endpoints` - Map of all 6 endpoint URLs
+- `lambda_function_arns` - All Lambda ARNs
+- `lambda_function_names` - All Lambda function names
+- `cognito_authorizer_id` - Authorizer ID
+
+**Features:**
+- Pre-signed S3 URLs (5 min expiration)
+- Photo lifecycle workflow (uploads/ → originals/ → archive/)
+- Status transitions (pending → published → archived)
+- Cognito JWT authorization on all endpoints
+- CORS support for production domains
+- File validation (JPEG/PNG/WebP, max 10MB)
+- CloudWatch logging for all functions
+- Least-privilege IAM policies
+
+**API Endpoints:**
+- `POST /photos/upload-url` - Generate pre-signed URL
+- `POST /photos` - Create photo metadata
+- `GET /photos?status={status}` - List photos
+- `GET /photos/{photoId}` - Get single photo
+- `PATCH /photos/{photoId}` - Update photo
+- `DELETE /photos/{photoId}` - Soft delete photo
+
+**Documentation:** `terraform/PHASE-5-SUMMARY.md`
+
+**Deployment Steps Required:**
+1. Build Lambda packages: `python3 build_lambdas.py`
+2. Run `terraform apply` to create all Phase 5 resources
+3. Test API endpoints with curl (see PHASE-5-SUMMARY.md)
+4. Verify Lambda CloudWatch logs
+5. Test pre-signed URL upload workflow
+
 ---
 
 ## 🔄 Next Steps
 
-1. **Deploy Phase 4** - Run terraform apply for S3 bucket + DynamoDB
-2. **Verify Infrastructure** - Test S3 bucket and DynamoDB table
-3. **Phase 5 Planning** - Design Lambda functions + API Gateway
-4. **Lambda Development** - Pre-signed URLs, photo processing
-5. **API Gateway Setup** - REST API with Cognito authorizer
+1. **Deploy Phase 5** - Build Lambda packages + run terraform apply
+2. **Test API** - Verify all 6 endpoints with curl (see PHASE-5-SUMMARY.md)
+3. **Phase 6 Planning** - Design admin dashboard UI/UX
+4. **Frontend Development** - Build photo upload + management UI
+5. **API Integration** - Connect React app to Lambda backend
 
 ---
 
@@ -262,6 +321,7 @@
 - **After Phase 2:** ~$1.80/month (+$0.50 for S3 storage, CloudFront in free tier)
 - **After Phase 3:** ~$1.80/month (+$0 for Cognito, within 50K MAU free tier)
 - **After Phase 4:** ~$1.82/month (+$0.02 for S3 photos + DynamoDB on-demand)
+- **After Phase 5:** ~$1.84/month (+$0.02 for Lambda + API Gateway + CloudWatch)
 - **Projected Full Stack:** ~$2-3/month (includes all phases)
 
 ---
@@ -272,11 +332,12 @@
 - State tracking files located in `.claude/` directory
 - Follow DEVELOPMENT_GUIDELINES.md for all code changes
 - Document architectural decisions in DECISIONS.md
-- Phases 1, 2, 3, & 4 code complete but not yet deployed
-- Full static hosting + authentication + photo storage infrastructure ready to deploy
+- Phases 1-5 code complete but not yet deployed
+- Full backend API infrastructure ready to deploy (6 Lambda functions + API Gateway)
 - React app needs dependencies installed (`npm install`) before build
 - Admin user must be created via AWS CLI after Cognito deployment
-- Phase 4 is infrastructure-only (no Lambda, API Gateway, or frontend changes)
+- Phase 5 Lambda packages must be built before deployment (`python3 build_lambdas.py`)
+- Phase 7 changed from CI/CD to thumbnail processing (CI/CD moved to Phase 8)
 
 ---
 
