@@ -394,3 +394,196 @@ resource "aws_cognito_user_pool_client" "web_client" {
     "email"
   ]
 }
+
+# ==============================================================================
+# PHASE 4: Photo Upload S3 Bucket
+# ==============================================================================
+
+# S3 bucket for photo storage
+resource "aws_s3_bucket" "photos" {
+  bucket = "${var.project_name}-photos"
+
+  tags = {
+    Name        = "${var.project_name}-photos"
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "4"
+  }
+}
+
+# Block all public access (photos accessed via CloudFront + pre-signed URLs)
+resource "aws_s3_bucket_public_access_block" "photos" {
+  bucket = aws_s3_bucket.photos.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Enable versioning for rollback capability
+resource "aws_s3_bucket_versioning" "photos" {
+  bucket = aws_s3_bucket.photos.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Server-side encryption
+resource "aws_s3_bucket_server_side_encryption_configuration" "photos" {
+  bucket = aws_s3_bucket.photos.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# CORS configuration for browser uploads
+resource "aws_s3_bucket_cors_configuration" "photos" {
+  bucket = aws_s3_bucket.photos.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "PUT", "POST", "DELETE", "HEAD"]
+    allowed_origins = [
+      "https://${var.domain_name}",
+      "https://www.${var.domain_name}"
+    ]
+    expose_headers = [
+      "ETag",
+      "x-amz-server-side-encryption",
+      "x-amz-request-id",
+      "x-amz-id-2"
+    ]
+    max_age_seconds = 3600
+  }
+}
+
+# Lifecycle policies for photo management
+resource "aws_s3_bucket_lifecycle_configuration" "photos" {
+  bucket = aws_s3_bucket.photos.id
+
+  # Rule 1: Clean up temporary uploads after 7 days
+  rule {
+    id     = "cleanup-uploads"
+    status = "Enabled"
+
+    filter {
+      prefix = "uploads/"
+    }
+
+    expiration {
+      days = 7
+    }
+  }
+
+  # Rule 2: Transition archived photos to cheaper storage after 30 days
+  rule {
+    id     = "archive-transition"
+    status = "Enabled"
+
+    filter {
+      prefix = "archive/"
+    }
+
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+  }
+
+  # Rule 3: Delete old versions after 90 days
+  rule {
+    id     = "cleanup-old-versions"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 90
+    }
+  }
+}
+
+# S3 bucket policy to enforce HTTPS-only access
+resource "aws_s3_bucket_policy" "photos" {
+  bucket = aws_s3_bucket.photos.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "EnforceHTTPSOnly"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          "${aws_s3_bucket.photos.arn}",
+          "${aws_s3_bucket.photos.arn}/*"
+        ]
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      }
+    ]
+  })
+}
+
+# ==============================================================================
+# PHASE 4: DynamoDB Table for Photo Metadata
+# ==============================================================================
+
+# DynamoDB table for photo metadata
+resource "aws_dynamodb_table" "photos" {
+  name         = "${var.project_name}-photos"
+  billing_mode = "PAY_PER_REQUEST" # On-demand pricing
+
+  hash_key = "photoId"
+
+  # Primary key attribute
+  attribute {
+    name = "photoId"
+    type = "S"
+  }
+
+  # GSI attributes
+  attribute {
+    name = "status"
+    type = "S"
+  }
+
+  attribute {
+    name = "uploadDate"
+    type = "S"
+  }
+
+  # Global Secondary Index for querying by status and upload date
+  global_secondary_index {
+    name            = "status-uploadDate-index"
+    hash_key        = "status"
+    range_key       = "uploadDate"
+    projection_type = "ALL"
+  }
+
+  # Enable point-in-time recovery for data protection
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  # Server-side encryption
+  server_side_encryption {
+    enabled = true
+  }
+
+  tags = {
+    Name        = "${var.project_name}-photos-metadata"
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "4"
+  }
+}

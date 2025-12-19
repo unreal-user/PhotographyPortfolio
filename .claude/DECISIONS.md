@@ -326,3 +326,112 @@ interface Photo {
 - JWT tokens ready for API Gateway authorization
 
 ---
+
+### ADR-011: Phase 4 Photo Storage Architecture
+**Date:** 2025-12-19
+**Status:** ✅ Accepted
+
+**Decision:** S3 + DynamoDB infrastructure-only (no Lambda, API Gateway, or frontend in Phase 4)
+
+**Context:** Phase 4 needs photo storage infrastructure. Key questions:
+1. Storage solution (S3 vs third-party CDN)
+2. Metadata storage (DynamoDB vs RDS)
+3. Scope (infrastructure-only vs full backend implementation)
+4. Billing mode (on-demand vs provisioned)
+5. Folder structure and lifecycle policies
+
+**Decisions Made:**
+
+**1. S3 for Photo Storage (over third-party CDN)**
+- Rationale: Native AWS integration, cost-effective, scales automatically
+- Cost: ~$0.012/month for 500MB storage
+- Trade-off: AWS lock-in, but acceptable for this use case
+
+**2. DynamoDB for Metadata (over RDS)**
+- Rationale: Serverless, scales to zero, simple schema, fast queries
+- Cost: ~$0.002/month on-demand billing
+- Trade-off: NoSQL limitations, but sufficient for photo metadata
+
+**3. Infrastructure-Only Scope (defer Lambda/API to Phase 5)**
+- Rationale: YAGNI principle - build only what's needed now
+- Approach: Create storage foundation, add functionality later
+- Trade-off: No photo upload capability yet, but cleaner separation of concerns
+
+**4. On-Demand Billing (over provisioned capacity)**
+- Rationale: Low, unpredictable traffic for admin-only app
+- Cost: Pay only for actual usage, scales automatically
+- Trade-off: Slightly higher cost per request, but much lower total cost
+
+**5. Folder Structure with Lifecycle Policies**
+- `uploads/` - Temporary staging (7-day auto-delete)
+- `originals/` - Published photos (permanent)
+- `archive/` - Soft-deleted photos (transition to IA after 30 days)
+- Rationale: Clear separation, automatic cleanup, cost optimization
+
+**Resources Implemented:**
+- S3 bucket (`photography-project-photos`)
+- S3 public access block (all public access blocked)
+- S3 versioning (rollback capability)
+- S3 server-side encryption (AES256)
+- S3 CORS configuration (browser uploads from production domain)
+- S3 lifecycle policies (3 rules: cleanup, archival, version management)
+- S3 bucket policy (HTTPS-only enforcement)
+- DynamoDB table with GSI (`status-uploadDate-index`)
+- Point-in-time recovery (data protection)
+- DynamoDB encryption at rest
+
+**DynamoDB Schema Design:**
+- Primary key: `photoId` (String) - UUID v4
+- GSI: `status-uploadDate-index` for querying photos by status + date
+- Attributes: title, description, alt, copyright, uploadedBy, uploadDate, status, S3 keys, file metadata, timestamps
+
+**CORS Configuration:**
+- Allowed origins: Production domains only (`https://test.com`, `https://www.test.com`)
+- Allowed methods: GET, PUT, POST, DELETE, HEAD
+- Purpose: Enable direct browser-to-S3 uploads via pre-signed URLs (Phase 5)
+
+**Lifecycle Policies:**
+1. **Cleanup Uploads** - Delete `uploads/*` after 7 days (abandoned uploads)
+2. **Archive Transition** - Move `archive/*` to Standard-IA after 30 days (cost optimization)
+3. **Version Cleanup** - Delete old versions after 90 days (control versioning costs)
+
+**Alternatives Considered:**
+1. **Third-party CDN (Cloudinary, Imgix)** - Faster implementation but monthly costs, vendor lock-in
+2. **RDS for metadata** - More familiar SQL but higher costs, requires instance management
+3. **Provisioned DynamoDB** - Predictable costs but higher for low traffic, capacity planning required
+4. **Full Phase 4 (Lambda + API)** - Complete backend but violates YAGNI, more complex deployment
+5. **No lifecycle policies** - Simpler but manual cleanup required, higher costs
+
+**Consequences:**
+- S3 provides scalable, cost-effective photo storage
+- DynamoDB scales to zero when not in use (minimal costs)
+- Infrastructure ready for Phase 5 Lambda functions
+- No photo upload capability until Phase 5 (API Gateway + Lambda)
+- Lifecycle policies reduce storage costs automatically
+- CORS enables future browser uploads via pre-signed URLs
+- Folder structure provides clear organization and cleanup
+
+**Security Features:**
+- Private S3 bucket (no public access)
+- Server-side encryption (AES256)
+- HTTPS-only enforcement
+- Versioning for rollback
+- DynamoDB encryption at rest
+- Point-in-time recovery enabled
+- CORS restricted to production domains
+
+**Cost Impact:**
+- S3 storage (500MB): ~$0.012/month
+- S3 requests: ~$0.001/month
+- DynamoDB on-demand: ~$0.002/month
+- **Total: ~$0.02/month** (cumulative: ~$1.82/month for Phases 0-4)
+
+**Phase 5 Preparation:**
+- S3 bucket ready for pre-signed URL uploads
+- DynamoDB schema contract defined
+- Folder conventions established
+- CORS configured for browser uploads
+- Outputs available for Lambda IAM policies
+- Lifecycle policies handle cleanup automatically
+
+---

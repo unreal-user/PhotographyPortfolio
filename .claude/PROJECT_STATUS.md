@@ -1,8 +1,8 @@
 # Photography Portfolio - Project Status
 
 **Last Updated:** 2025-12-19
-**Current Phase:** Phase 3 Complete → Ready for Phase 4
-**Branch:** phase-3
+**Current Phase:** Phase 4 Complete → Ready for Phase 5
+**Branch:** phase-4
 **Environment:** tmpfs (temporary filesystem - must commit regularly!)
 
 ---
@@ -11,7 +11,7 @@
 
 **Target:** Production-ready photography portfolio hosted on AWS S3 with CloudFront CDN
 
-**Progress:** ~55% (Phases 0, 1, 2, 3 complete - authentication ready)
+**Progress:** ~65% (Phases 0, 1, 2, 3, 4 complete - photo storage infrastructure ready)
 
 ---
 
@@ -59,8 +59,8 @@
 | **Phase 1** | ✅ **COMPLETE** | DNS & ACM Certificate (Route53 + SSL) |
 | **Phase 2** | ✅ **COMPLETE** | Static site hosting (S3 + CloudFront CDN) |
 | **Phase 3** | ✅ **COMPLETE** | Cognito authentication (admin login) |
-| **Phase 4** | ⏳ **NEXT** | Photo upload S3 bucket |
-| **Phase 5** | ⏳ Pending | API Gateway + Lambda functions |
+| **Phase 4** | ✅ **COMPLETE** | Photo storage (S3 + DynamoDB) |
+| **Phase 5** | ⏳ **NEXT** | API Gateway + Lambda functions |
 | **Phase 6** | ⏳ Pending | Frontend integration with backend |
 | **Phase 7** | ⏳ Pending | CI/CD deployment pipeline |
 
@@ -171,15 +171,68 @@
 4. Install dependencies: `npm install`
 5. Build & deploy to S3
 
+### Phase 4 Details (COMPLETE - CODE READY)
+**Date Completed:** 2025-12-19
+**Status:** Code complete, deployment pending
+**Resources Defined:**
+- S3 bucket for photo storage (private, encrypted, versioned)
+- S3 public access block (all public access blocked)
+- S3 versioning (rollback capability)
+- S3 server-side encryption (AES256)
+- S3 CORS configuration (browser uploads from production domain)
+- S3 lifecycle policies (auto-cleanup, archival, version management)
+- S3 bucket policy (HTTPS-only enforcement)
+- DynamoDB table for photo metadata (on-demand billing)
+
+**Outputs Provided:**
+- `photos_s3_bucket_name` - S3 bucket name for photo storage
+- `photos_s3_bucket_arn` - Bucket ARN reference
+- `photos_s3_bucket_region` - S3 bucket region
+- `photos_dynamodb_table_name` - DynamoDB table name for metadata
+- `photos_dynamodb_table_arn` - DynamoDB table ARN reference
+
+**Features:**
+- Private S3 bucket (no public access)
+- Server-side encryption (AES256)
+- HTTPS-only enforcement
+- Versioning for rollback
+- CORS for browser uploads (production domains only)
+- Lifecycle policies:
+  - Delete uploads/ after 7 days
+  - Transition archive/ to Standard-IA after 30 days
+  - Delete old versions after 90 days
+- DynamoDB on-demand billing (auto-scaling)
+- Global Secondary Index (status-uploadDate-index)
+- Point-in-time recovery enabled
+- DynamoDB encryption at rest
+
+**Folder Structure:**
+- `uploads/` - Temporary staging (7-day auto-cleanup)
+- `originals/` - Published full-resolution photos
+- `archive/` - Soft-deleted photos (transition to IA after 30 days)
+
+**DynamoDB Schema:**
+- Primary key: photoId (String)
+- GSI: status-uploadDate-index (status + uploadDate)
+- Attributes: title, description, alt, copyright, uploadedBy, uploadDate, status, S3 keys, file metadata, timestamps
+
+**Documentation:** `terraform/PHASE-4-SUMMARY.md`
+
+**Deployment Steps Required:**
+1. Run `terraform apply` to create S3 bucket + DynamoDB table
+2. Verify S3 configuration (versioning, encryption, CORS, lifecycle)
+3. Verify DynamoDB table (indexes, point-in-time recovery)
+4. Test DynamoDB write/read operations
+
 ---
 
 ## 🔄 Next Steps
 
-1. **Deploy Phase 3** - Run terraform apply for Cognito
-2. **Create Admin User** - Use AWS CLI to set up admin account
-3. **Configure Frontend** - Add Cognito config to .env.local
-4. **Test Authentication** - Verify login/logout flow
-5. **Phase 4 Planning** - Design photo upload S3 bucket & Lambda
+1. **Deploy Phase 4** - Run terraform apply for S3 bucket + DynamoDB
+2. **Verify Infrastructure** - Test S3 bucket and DynamoDB table
+3. **Phase 5 Planning** - Design Lambda functions + API Gateway
+4. **Lambda Development** - Pre-signed URLs, photo processing
+5. **API Gateway Setup** - REST API with Cognito authorizer
 
 ---
 
@@ -208,6 +261,7 @@
 - **After Phase 1:** ~$1.30/month (+$1 for Route53 hosted zone + queries)
 - **After Phase 2:** ~$1.80/month (+$0.50 for S3 storage, CloudFront in free tier)
 - **After Phase 3:** ~$1.80/month (+$0 for Cognito, within 50K MAU free tier)
+- **After Phase 4:** ~$1.82/month (+$0.02 for S3 photos + DynamoDB on-demand)
 - **Projected Full Stack:** ~$2-3/month (includes all phases)
 
 ---
@@ -218,10 +272,11 @@
 - State tracking files located in `.claude/` directory
 - Follow DEVELOPMENT_GUIDELINES.md for all code changes
 - Document architectural decisions in DECISIONS.md
-- Phases 1, 2, & 3 code complete but not yet deployed
-- Full static hosting + authentication infrastructure ready to deploy
+- Phases 1, 2, 3, & 4 code complete but not yet deployed
+- Full static hosting + authentication + photo storage infrastructure ready to deploy
 - React app needs dependencies installed (`npm install`) before build
 - Admin user must be created via AWS CLI after Cognito deployment
+- Phase 4 is infrastructure-only (no Lambda, API Gateway, or frontend changes)
 
 ---
 

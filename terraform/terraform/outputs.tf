@@ -89,3 +89,32 @@ output "aws_region_cognito" {
   description = "AWS region for Cognito (for frontend config)"
   value       = var.aws_region
 }
+
+# ==============================================================================
+# PHASE 4 OUTPUTS: Photo Storage (S3 + DynamoDB)
+# ==============================================================================
+
+output "photos_s3_bucket_name" {
+  description = "S3 bucket name for photo storage"
+  value       = aws_s3_bucket.photos.id
+}
+
+output "photos_s3_bucket_arn" {
+  description = "S3 bucket ARN for IAM policies"
+  value       = aws_s3_bucket.photos.arn
+}
+
+output "photos_s3_bucket_region" {
+  description = "S3 bucket region"
+  value       = aws_s3_bucket.photos.region
+}
+
+output "photos_dynamodb_table_name" {
+  description = "DynamoDB table name for photo metadata"
+  value       = aws_dynamodb_table.photos.name
+}
+
+output "photos_dynamodb_table_arn" {
+  description = "DynamoDB table ARN for IAM policies"
+  value       = aws_dynamodb_table.photos.arn
+}
