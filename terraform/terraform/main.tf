@@ -361,7 +361,8 @@ resource "aws_cognito_user_pool_client" "web_client" {
     "ALLOW_USER_PASSWORD_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH",
     "ALLOW_USER_SRP_AUTH",
-    "ALLOW_CUSTOM_AUTH"
+    "ALLOW_CUSTOM_AUTH",
+    "ALLOW_ADMIN_USER_PASSWORD_AUTH"
   ]
 
   # Token validity
