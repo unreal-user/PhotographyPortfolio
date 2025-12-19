@@ -24,7 +24,8 @@
   height: var(--header-height);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: var(--space-md, 1rem);
 }
 
 /* Desktop Navigation */

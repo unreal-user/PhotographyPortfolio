@@ -60,3 +60,32 @@ output "website_url_www" {
   description = "Website URL with www subdomain (HTTPS)"
   value       = "https://www.${var.domain_name}"
 }
+
+# ==============================================================================
+# PHASE 3 OUTPUTS: Cognito Authentication
+# ==============================================================================
+
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID for frontend configuration"
+  value       = aws_cognito_user_pool.main.id
+}
+
+output "cognito_user_pool_arn" {
+  description = "Cognito User Pool ARN"
+  value       = aws_cognito_user_pool.main.arn
+}
+
+output "cognito_app_client_id" {
+  description = "Cognito App Client ID for frontend authentication"
+  value       = aws_cognito_user_pool_client.web_client.id
+}
+
+output "cognito_user_pool_endpoint" {
+  description = "Cognito User Pool endpoint"
+  value       = aws_cognito_user_pool.main.endpoint
+}
+
+output "aws_region_cognito" {
+  description = "AWS region for Cognito (for frontend config)"
+  value       = var.aws_region
+}

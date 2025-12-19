@@ -277,3 +277,120 @@ resource "aws_route53_record" "website_www_aaaa" {
     evaluate_target_health = false
   }
 }
+
+# ==============================================================================
+# PHASE 3: Cognito Authentication
+# ==============================================================================
+
+# Cognito User Pool
+resource "aws_cognito_user_pool" "main" {
+  name = "${var.project_name}-user-pool"
+
+  # Username configuration
+  username_attributes      = ["email"]
+  auto_verified_attributes = ["email"]
+
+  # Password policy
+  password_policy {
+    minimum_length                   = 12
+    require_lowercase                = true
+    require_uppercase                = true
+    require_numbers                  = true
+    require_symbols                  = true
+    temporary_password_validity_days = 7
+  }
+
+  # Account recovery
+  account_recovery_setting {
+    recovery_mechanism {
+      name     = "verified_email"
+      priority = 1
+    }
+  }
+
+  # MFA configuration (optional for TOTP, we'll use custom email MFA)
+  mfa_configuration = "OPTIONAL"
+
+  software_token_mfa_configuration {
+    enabled = true
+  }
+
+  # Admin create user config (no self-signup)
+  admin_create_user_config {
+    allow_admin_create_user_only = true
+  }
+
+  # Email configuration (use Cognito default for now)
+  email_configuration {
+    email_sending_account = "COGNITO_DEFAULT"
+  }
+
+  # User attribute schema
+  schema {
+    name                = "email"
+    attribute_data_type = "String"
+    required            = true
+    mutable             = true
+  }
+
+  # Device tracking for remember device functionality
+  device_configuration {
+    challenge_required_on_new_device      = false
+    device_only_remembered_on_user_prompt = true
+  }
+
+  # Deletion protection
+  deletion_protection = "ACTIVE"
+
+  tags = {
+    Name        = "${var.project_name}-user-pool"
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "3"
+  }
+}
+
+# Cognito User Pool Client (for React app)
+resource "aws_cognito_user_pool_client" "web_client" {
+  name         = "${var.project_name}-web-client"
+  user_pool_id = aws_cognito_user_pool.main.id
+
+  # Auth flows
+  explicit_auth_flows = [
+    "ALLOW_USER_PASSWORD_AUTH",
+    "ALLOW_REFRESH_TOKEN_AUTH",
+    "ALLOW_USER_SRP_AUTH",
+    "ALLOW_CUSTOM_AUTH"
+  ]
+
+  # Token validity
+  id_token_validity      = 60  # 1 hour
+  access_token_validity  = 60  # 1 hour
+  refresh_token_validity = 30  # 30 days
+
+  token_validity_units {
+    id_token      = "minutes"
+    access_token  = "minutes"
+    refresh_token = "days"
+  }
+
+  # Security settings
+  generate_secret                      = false # Public client (SPA)
+  prevent_user_existence_errors        = "ENABLED"
+  enable_token_revocation              = true
+  enable_propagate_additional_user_context_data = false
+
+  # OAuth flows (disabled for now, not using hosted UI)
+  allowed_oauth_flows_user_pool_client = false
+
+  # Read/write permissions
+  read_attributes = [
+    "email",
+    "email_verified"
+  ]
+
+  write_attributes = [
+    "email"
+  ]
+}

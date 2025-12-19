@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import UserMenu from '../UserMenu/UserMenu';
 import './header.css';
 
 const Header: React.FC = () => {
@@ -42,8 +43,11 @@ const Header: React.FC = () => {
           </ul>
         </nav>
 
+        {/* User Menu */}
+        <UserMenu />
+
         {/* Mobile Menu Button */}
-        <button 
+        <button
           className="mobile-menu-button"
           onClick={toggleMobileMenu}
           aria-label="Toggle mobile menu"

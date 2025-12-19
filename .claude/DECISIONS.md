@@ -249,3 +249,80 @@ interface Photo {
 - Never delete old ADRs - mark as "Superseded" if replaced
 - Keep rationale clear and concise
 - Document alternatives considered
+
+---
+
+### ADR-010: Phase 3 Authentication Implementation
+**Date:** 2025-12-19
+**Status:** ✅ Accepted
+
+**Decision:** Custom login UI + Optional MFA + Client-side device tracking
+
+**Context:** Phase 3 requires admin authentication with Cognito. Key questions:
+1. Custom login UI vs Cognito Hosted UI
+2. MFA configuration (required, optional, or disabled)
+3. Device tracking approach (email MFA for new devices)
+4. Frontend library (AWS Amplify vs amazon-cognito-identity-js)
+
+**Decisions Made:**
+
+**1. Custom Login UI (over Cognito Hosted UI)**
+- Rationale: Matches portfolio design, better UX, more control over styling
+- Trade-off: More code upfront, but better long-term branding
+
+**2. Optional MFA (not required or disabled)**
+- Rationale: YAGNI for single admin user, can be enabled via Cognito console if desired
+- Trade-off: Slightly less secure initially, but adequate for single-admin use case
+- Future: Email-based MFA for new devices to be implemented with Lambda triggers
+
+**3. Client-side Device Tracking (cookie-based)**
+- Rationale: Simple implementation, no backend required for MVP
+- Approach: UUID cookie (90-day expiry, HTTPS-only, SameSite=Strict)
+- Trade-off: Client-side only (can be cleared), but sufficient for trusted device tracking
+- Future: Backend device tracking with DynamoDB for Phase 4+
+
+**4. AWS Amplify Library (over raw cognito-identity-js)**
+- Rationale: Official AWS library, handles token refresh automatically, good TypeScript support
+- Trade-off: ~100KB bundle impact, but saves significant implementation complexity
+
+**Key Features Implemented:**
+- Admin-only access (no self-signup)
+- Strong password policy (12+ chars, complexity required)
+- Email verification for account recovery
+- Device cookie for trusted devices (foundation for future email MFA)
+- JWT-based authentication (1h access, 30d refresh)
+- Secure session management with auto token refresh
+- ProtectedRoute component for future admin pages
+
+**Alternatives Considered:**
+1. **Cognito Hosted UI** - Faster but disconnected from site design
+2. **Required MFA** - More secure but adds friction for single user
+3. **Disabled MFA** - Simpler but no MFA capability at all (less secure)
+4. **Server-side device tracking** - More robust but requires backend infrastructure (Phase 4+)
+5. **Raw cognito-identity-js** - Lighter bundle but more manual token management
+
+**Consequences:**
+- Custom UI requires maintenance but provides better UX
+- Optional MFA allows flexibility without forcing complexity
+- Device tracking prepares for future email MFA implementation
+- Amplify adds bundle size but reduces implementation time
+- Admin user must be created manually via AWS CLI (no passwords in Terraform)
+
+**Security Considerations:**
+- Password policy: 12+ characters with complexity requirements
+- Short-lived access tokens (1 hour)
+- Secure cookies (HTTPS-only, SameSite=Strict)
+- Token revocation enabled for emergency logout
+- User existence errors prevented (generic error messages)
+- Deletion protection on User Pool (prevents accidental deletion)
+
+**Cost Impact:**
+- $0/month (Cognito free tier covers up to 50K MAU)
+
+**Phase 4 Preparation:**
+- ProtectedRoute component ready for admin dashboard
+- Auth state available globally via AuthContext
+- Device tracking foundation for email MFA Lambda triggers
+- JWT tokens ready for API Gateway authorization
+
+---

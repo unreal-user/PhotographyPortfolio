@@ -10,12 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "aws-amplify": "^6.11.4",
+    "js-cookie": "^3.0.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.10.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
