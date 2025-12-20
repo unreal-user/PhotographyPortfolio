@@ -1,0 +1,200 @@
+import { fetchAuthSession } from 'aws-amplify/auth';
+import type { Photo } from '../interfaces/Photo';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
+interface GenerateUploadUrlRequest {
+  fileType: string; // 'image/jpeg' | 'image/png' | 'image/webp'
+  fileSize: number;
+  fileName: string;
+}
+
+interface GenerateUploadUrlResponse {
+  uploadUrl: string;
+  photoId: string;
+  s3Key: string;
+  expiresAt: string;
+}
+
+interface CreatePhotoRequest {
+  photoId: string;
+  title: string;
+  description?: string;
+  alt: string;
+  copyright: string;
+  gallery?: string;
+}
+
+interface UpdatePhotoRequest {
+  title?: string;
+  description?: string;
+  alt?: string;
+  copyright?: string;
+  gallery?: string;
+  status?: 'published' | 'archived';
+}
+
+interface ListPhotosResponse {
+  photos: Photo[];
+  count: number;
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Get authentication headers with JWT token from AWS Amplify
+ */
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const session = await fetchAuthSession();
+  const token = session.tokens?.idToken?.toString();
+
+  if (!token) {
+    throw new Error('Not authenticated. Please log in.');
+  }
+
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+// ============================================================================
+// API Client
+// ============================================================================
+
+export const photoApi = {
+  /**
+   * Generate pre-signed S3 URL for photo upload
+   */
+  async generateUploadUrl(request: GenerateUploadUrlRequest): Promise<GenerateUploadUrlResponse> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/photos/upload-url`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to generate upload URL' }));
+      throw new Error(error.error || 'Failed to generate upload URL');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Upload file directly to S3 using pre-signed URL
+   * (No authentication required - URL is pre-signed)
+   */
+  async uploadToS3(uploadUrl: string, file: File): Promise<void> {
+    const response = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload file to S3');
+    }
+  },
+
+  /**
+   * Create photo metadata in DynamoDB after S3 upload
+   */
+  async createPhoto(request: CreatePhotoRequest): Promise<{ photoId: string; status: string; createdAt: string }> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/photos`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to create photo' }));
+      throw new Error(error.error || 'Failed to create photo');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * List photos by status using DynamoDB GSI
+   */
+  async listPhotos(status: 'pending' | 'published' | 'archived', limit = 50): Promise<ListPhotosResponse> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/photos?status=${status}&limit=${limit}`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to list photos' }));
+      throw new Error(error.error || 'Failed to list photos');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Get single photo by photoId
+   */
+  async getPhoto(photoId: string): Promise<Photo> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/photos/${photoId}`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to get photo' }));
+      throw new Error(error.error || 'Failed to get photo');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Update photo metadata and/or status
+   */
+  async updatePhoto(photoId: string, updates: UpdatePhotoRequest): Promise<{ photoId: string; status: string; updatedAt: string }> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/photos/${photoId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to update photo' }));
+      throw new Error(error.error || 'Failed to update photo');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Soft delete photo (moves to archive/)
+   */
+  async deletePhoto(photoId: string): Promise<{ photoId: string; status: string; archivedAt: string }> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/photos/${photoId}`, {
+      method: 'DELETE',
+      headers,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to delete photo' }));
+      throw new Error(error.error || 'Failed to delete photo');
+    }
+
+    return response.json();
+  },
+};

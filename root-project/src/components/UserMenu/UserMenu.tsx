@@ -65,10 +65,9 @@ const UserMenu: React.FC = () => {
           <div className="user-menu-divider" />
 
           <nav className="user-menu-nav">
-            {/* Future: Add admin dashboard link */}
-            {/* <Link to="/admin" className="user-menu-item">
+            <Link to="/admin" className="user-menu-item">
               Dashboard
-            </Link> */}
+            </Link>
 
             <button
               onClick={handleLogout}

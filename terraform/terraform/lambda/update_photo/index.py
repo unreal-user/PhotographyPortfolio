@@ -26,6 +26,8 @@ def lambda_handler(event, context):
         "title": "Updated title",
         "description": "Updated description",
         "alt": "Updated alt text",
+        "copyright": "Updated copyright",
+        "gallery": "Updated gallery name",
         "status": "published"  // Triggers copy from uploads/ to originals/
     }
 
@@ -72,6 +74,10 @@ def lambda_handler(event, context):
         if 'copyright' in body:
             update_expr += ", copyright = :copyright"
             expr_values[':copyright'] = body['copyright']
+
+        if 'gallery' in body:
+            update_expr += ", gallery = :gallery"
+            expr_values[':gallery'] = body['gallery']
 
         # Handle status change: pending -> published
         if new_status != current_status:

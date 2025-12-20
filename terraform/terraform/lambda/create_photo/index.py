@@ -23,7 +23,8 @@ def lambda_handler(event, context):
         "title": "Sunset Photo",
         "description": "Optional description",
         "alt": "Alt text for accessibility",
-        "copyright": "© 2025 Photographer"
+        "copyright": "© 2025 Photographer",
+        "gallery": "Optional gallery name"
     }
 
     Output:
@@ -49,6 +50,7 @@ def lambda_handler(event, context):
 
         # Optional fields
         description = body.get('description', '')
+        gallery = body.get('gallery', '')
 
         # Validate required fields
         if not all([photo_id, title, alt, copyright]):
@@ -92,6 +94,7 @@ def lambda_handler(event, context):
             'description': description,
             'alt': alt,
             'copyright': copyright,
+            'gallery': gallery,
             'uploadedBy': uploaded_by,
             'uploadDate': now,
             'status': 'pending',
