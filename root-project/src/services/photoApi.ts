@@ -49,6 +49,7 @@ interface ListPhotosResponse {
 
 /**
  * Get authentication headers with JWT token from AWS Amplify
+ * Throws error if not authenticated (use for write operations)
  */
 async function getAuthHeaders(): Promise<HeadersInit> {
   const session = await fetchAuthSession();
@@ -60,6 +61,30 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 
   return {
     'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+/**
+ * Get headers with optional authentication (for public read endpoints)
+ * Includes auth token if user is logged in, otherwise just content-type
+ */
+async function getOptionalAuthHeaders(): Promise<HeadersInit> {
+  try {
+    const session = await fetchAuthSession();
+    const token = session.tokens?.idToken?.toString();
+
+    if (token) {
+      return {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+    }
+  } catch (error) {
+    // User not authenticated, continue without auth headers
+  }
+
+  return {
     'Content-Type': 'application/json',
   };
 }
@@ -127,9 +152,10 @@ export const photoApi = {
 
   /**
    * List photos by status using DynamoDB GSI
+   * Public endpoint - no authentication required for viewing published photos
    */
   async listPhotos(status: 'pending' | 'published' | 'archived', limit = 50): Promise<ListPhotosResponse> {
-    const headers = await getAuthHeaders();
+    const headers = await getOptionalAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/photos?status=${status}&limit=${limit}`, {
       method: 'GET',
       headers,
@@ -145,9 +171,10 @@ export const photoApi = {
 
   /**
    * Get single photo by photoId
+   * Public endpoint - no authentication required for viewing published photos
    */
   async getPhoto(photoId: string): Promise<Photo> {
-    const headers = await getAuthHeaders();
+    const headers = await getOptionalAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/photos/${photoId}`, {
       method: 'GET',
       headers,
