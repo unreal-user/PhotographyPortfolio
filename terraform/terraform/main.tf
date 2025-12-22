@@ -1547,10 +1547,8 @@ resource "aws_api_gateway_stage" "photos_api_stage" {
   stage_name    = "prod"
 
   # Rate limiting to prevent abuse
-  throttle_settings {
-    burst_limit = 200 # Max requests in a burst
-    rate_limit  = 100 # Sustained requests per second
-  }
+  throttle_burst_limit = 200 # Max requests in a burst
+  throttle_rate_limit  = 100 # Sustained requests per second
 
   tags = {
     Name        = "photography-project-api-prod"
