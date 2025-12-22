@@ -1514,6 +1514,16 @@ resource "aws_api_gateway_integration_response" "photo_by_id_options_integration
 resource "aws_api_gateway_deployment" "photos_api_deployment" {
   rest_api_id = aws_api_gateway_rest_api.photos_api.id
 
+  # Trigger redeployment when methods change (including authorization)
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_method.list_photos_get.id,
+      aws_api_gateway_method.get_photo_get.id,
+      aws_api_gateway_method.list_photos_get.authorization,
+      aws_api_gateway_method.get_photo_get.authorization,
+    ]))
+  }
+
   depends_on = [
     aws_api_gateway_integration.generate_upload_url_integration,
     aws_api_gateway_integration.create_photo_integration,
