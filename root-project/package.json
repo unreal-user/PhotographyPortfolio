@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "upload": "aws s3 sync dist/ s3://photography-project-website/ --delete",
+    "clear-cache": "aws cloudfront create-invalidation --distribution-id E3K5LWEXRBK0GF --paths \"/*\""
   },
   "dependencies": {
     "aws-amplify": "^6.11.4",

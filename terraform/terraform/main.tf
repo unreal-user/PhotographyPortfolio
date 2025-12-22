@@ -1046,7 +1046,7 @@ resource "aws_api_gateway_authorizer" "cognito_authorizer" {
   name            = "cognito-authorizer"
   rest_api_id     = aws_api_gateway_rest_api.photos_api.id
   type            = "COGNITO_USER_POOLS"
-  provider_arns   = [aws_cognito_user_pool.admin_pool.arn]
+  provider_arns   = [aws_cognito_user_pool.main.arn]
   identity_source = "method.request.header.Authorization"
 }
 

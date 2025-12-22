@@ -65,7 +65,7 @@ terraform output -raw api_gateway_url
 
 **Example Output:**
 ```
-https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod
+https://pijf9vfkoi.execute-api.us-east-1.amazonaws.com/prod
 ```
 
 **Save this URL** - you'll need it for Phase 6 frontend configuration.

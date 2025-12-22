@@ -30,7 +30,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({ photos }) => {
       <div className="photo-grid">
         {photos.map((photo) => (
           <PhotoThumbnail
-            key={photo.id}
+            key={photo.photoId}
             photo={photo}
             onClick={() => handleThumbnailClick(photo)}
           />
