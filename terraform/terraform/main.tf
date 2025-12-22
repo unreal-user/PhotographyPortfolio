@@ -1546,6 +1546,12 @@ resource "aws_api_gateway_stage" "photos_api_stage" {
   rest_api_id   = aws_api_gateway_rest_api.photos_api.id
   stage_name    = "prod"
 
+  # Rate limiting to prevent abuse
+  throttle_settings {
+    burst_limit = 200 # Max requests in a burst
+    rate_limit  = 100 # Sustained requests per second
+  }
+
   tags = {
     Name        = "photography-project-api-prod"
     Environment = var.environment
