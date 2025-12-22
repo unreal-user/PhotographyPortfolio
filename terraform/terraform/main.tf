@@ -1240,13 +1240,12 @@ resource "aws_api_gateway_integration" "create_photo_integration" {
   uri                     = aws_lambda_function.create_photo.invoke_arn
 }
 
-# GET /photos
+# GET /photos (Public - no authentication required for portfolio viewing)
 resource "aws_api_gateway_method" "list_photos_get" {
   rest_api_id   = aws_api_gateway_rest_api.photos_api.id
   resource_id   = aws_api_gateway_resource.photos.id
   http_method   = "GET"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+  authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "list_photos_integration" {
@@ -1258,13 +1257,12 @@ resource "aws_api_gateway_integration" "list_photos_integration" {
   uri                     = aws_lambda_function.list_photos.invoke_arn
 }
 
-# GET /photos/{photoId}
+# GET /photos/{photoId} (Public - no authentication required for portfolio viewing)
 resource "aws_api_gateway_method" "get_photo_get" {
   rest_api_id   = aws_api_gateway_rest_api.photos_api.id
   resource_id   = aws_api_gateway_resource.photo_by_id.id
   http_method   = "GET"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+  authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "get_photo_integration" {
