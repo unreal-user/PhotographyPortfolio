@@ -12,6 +12,38 @@ class DecimalEncoder(json.JSONEncoder):
             return int(obj) if obj % 1 == 0 else float(obj)
         return super(DecimalEncoder, self).default(obj)
 
+def generate_cloudfront_url(original_key, cloudfront_domain):
+    """
+    Generate CloudFront URL from S3 key.
+
+    Args:
+        original_key: S3 object key (e.g., 'uploads/abc.jpg', 'originals/def.jpg')
+        cloudfront_domain: CloudFront distribution domain name
+
+    Returns:
+        HTTPS URL to CloudFront distribution
+    """
+    if not original_key:
+        return None
+
+    # CloudFront URL format: https://{domain}/{key}
+    return f"https://{cloudfront_domain}/{original_key}"
+
+def enrich_photo_with_urls(photo, cloudfront_domain):
+    """
+    Add thumbnailUrl and fullResUrl to photo object.
+
+    For Phase 7, both thumbnail and full-res use the same CloudFront URL.
+    In future phases, we could implement Lambda@Edge for dynamic resizing.
+    """
+    if 'originalKey' in photo:
+        # Both use the same URL for now (CloudFront serves original)
+        url = generate_cloudfront_url(photo['originalKey'], cloudfront_domain)
+        photo['thumbnailUrl'] = url
+        photo['fullResUrl'] = url
+
+    return photo
+
 def lambda_handler(event, context):
     """
     List photos filtered by status.
@@ -27,6 +59,11 @@ def lambda_handler(event, context):
     }
     """
     try:
+        # Get CloudFront domain from environment
+        cloudfront_domain = os.environ.get('CLOUDFRONT_DOMAIN_NAME')
+        if not cloudfront_domain:
+            print("WARNING: CLOUDFRONT_DOMAIN_NAME not set in environment")
+
         # Parse query parameters
         params = event.get('queryStringParameters') or {}
         status = params.get('status', 'published')
@@ -49,6 +86,10 @@ def lambda_handler(event, context):
         )
 
         photos = response.get('Items', [])
+
+        # Enrich each photo with CloudFront URLs
+        if cloudfront_domain:
+            photos = [enrich_photo_with_urls(photo, cloudfront_domain) for photo in photos]
 
         return success_response({
             'photos': photos,

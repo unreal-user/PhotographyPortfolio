@@ -12,6 +12,20 @@ class DecimalEncoder(json.JSONEncoder):
             return int(obj) if obj % 1 == 0 else float(obj)
         return super(DecimalEncoder, self).default(obj)
 
+def generate_cloudfront_url(original_key, cloudfront_domain):
+    """Generate CloudFront URL from S3 key."""
+    if not original_key:
+        return None
+    return f"https://{cloudfront_domain}/{original_key}"
+
+def enrich_photo_with_urls(photo, cloudfront_domain):
+    """Add thumbnailUrl and fullResUrl to photo object."""
+    if 'originalKey' in photo:
+        url = generate_cloudfront_url(photo['originalKey'], cloudfront_domain)
+        photo['thumbnailUrl'] = url
+        photo['fullResUrl'] = url
+    return photo
+
 def lambda_handler(event, context):
     """
     Get single photo metadata by photoId.
@@ -23,22 +37,34 @@ def lambda_handler(event, context):
     {
         "photoId": "...",
         "title": "...",
+        "thumbnailUrl": "https://...cloudfront.net/originals/...",
+        "fullResUrl": "https://...cloudfront.net/originals/...",
         ...
     }
     """
     try:
+        # Get CloudFront domain from environment
+        cloudfront_domain = os.environ.get('CLOUDFRONT_DOMAIN_NAME')
+        if not cloudfront_domain:
+            print("WARNING: CLOUDFRONT_DOMAIN_NAME not set in environment")
+
         # Parse path parameter
         photo_id = event['pathParameters']['photoId']
 
         # Get item from DynamoDB
         table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAME'])
-
         response = table.get_item(Key={'photoId': photo_id})
 
         if 'Item' not in response:
             return error_response(404, 'Photo not found', 'NotFoundError')
 
-        return success_response(response['Item'])
+        photo = response['Item']
+
+        # Enrich with CloudFront URLs
+        if cloudfront_domain:
+            photo = enrich_photo_with_urls(photo, cloudfront_domain)
+
+        return success_response(photo)
 
     except KeyError as e:
         return error_response(400, f'Missing path parameter: {str(e)}', 'ValidationError')

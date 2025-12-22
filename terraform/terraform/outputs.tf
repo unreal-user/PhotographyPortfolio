@@ -120,6 +120,25 @@ output "photos_dynamodb_table_arn" {
 }
 
 # ==============================================================================
+# PHASE 7 OUTPUTS: Photos CloudFront Distribution
+# ==============================================================================
+
+output "photos_cloudfront_distribution_id" {
+  description = "CloudFront distribution ID for photos"
+  value       = aws_cloudfront_distribution.photos.id
+}
+
+output "photos_cloudfront_domain_name" {
+  description = "CloudFront domain name for photos (use this for photo URLs)"
+  value       = aws_cloudfront_distribution.photos.domain_name
+}
+
+output "photos_cdn_url" {
+  description = "Full HTTPS URL for photos CDN"
+  value       = "https://${aws_cloudfront_distribution.photos.domain_name}"
+}
+
+# ==============================================================================
 # PHASE 5 OUTPUTS: Lambda Functions + API Gateway
 # ==============================================================================
 
