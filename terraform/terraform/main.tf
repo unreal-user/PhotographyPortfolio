@@ -1546,14 +1546,22 @@ resource "aws_api_gateway_stage" "photos_api_stage" {
   rest_api_id   = aws_api_gateway_rest_api.photos_api.id
   stage_name    = "prod"
 
-  # Rate limiting to prevent abuse
-  throttle_burst_limit = 200 # Max requests in a burst
-  throttle_rate_limit  = 100 # Sustained requests per second
-
   tags = {
     Name        = "photography-project-api-prod"
     Environment = var.environment
     ManagedBy   = "terraform"
     Phase       = "5"
+  }
+}
+
+# Configure rate limiting for all API methods to prevent abuse
+resource "aws_api_gateway_method_settings" "photos_api_throttle" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  stage_name  = aws_api_gateway_stage.photos_api_stage.stage_name
+  method_path = "*/*" # Apply to all resources and methods
+
+  settings {
+    throttling_rate_limit  = 100 # Sustained requests per second
+    throttling_burst_limit = 200 # Max requests in a burst
   }
 }
