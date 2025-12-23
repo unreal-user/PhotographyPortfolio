@@ -1213,7 +1213,6 @@ resource "aws_lambda_function" "contact_form" {
     variables = {
       SENDER_EMAIL     = var.contact_form_sender_email
       RECIPIENT_EMAILS = join(",", var.contact_form_recipient_emails)
-      AWS_REGION       = var.aws_region
     }
   }
 

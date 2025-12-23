@@ -3,7 +3,8 @@ import json
 import os
 from datetime import datetime
 
-ses = boto3.client('ses', region_name=os.environ.get('AWS_REGION', 'us-east-1'))
+# boto3 automatically uses the Lambda function's region
+ses = boto3.client('ses')
 
 def get_allowed_origin(event):
     """CORS allowlist"""
