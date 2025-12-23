@@ -3,14 +3,17 @@ import { useBatchUpload } from '../../hooks/useBatchUpload';
 import './BatchUploadModal.css';
 
 interface BatchUploadModalProps {
+  isOpen: boolean;
   onClose: () => void;
   onComplete: () => void; // Refresh admin page after upload
 }
 
-export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({ onClose, onComplete }) => {
+export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({ isOpen, onClose, onComplete }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploads, isUploading, uploadFiles, retryFailed } = useBatchUpload();
+
+  if (!isOpen) return null;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {

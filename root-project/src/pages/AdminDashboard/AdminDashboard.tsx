@@ -375,6 +375,7 @@ const AdminDashboard: React.FC = () => {
       />
 
       <BatchUploadModal
+        isOpen={showBatchUploadModal}
         onClose={() => setShowBatchUploadModal(false)}
         onComplete={loadPhotos}
       />

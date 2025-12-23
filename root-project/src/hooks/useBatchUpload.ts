@@ -52,8 +52,8 @@ export const useBatchUpload = () => {
             return newMap;
           });
 
-          // Step 1: Generate upload URL
-          const { uploadUrl, photoId, s3Key } = await photoApi.generateUploadUrl({
+          // Step 1: Generate upload URL (presigned URL keeps S3 credentials secure)
+          const { uploadUrl, photoId } = await photoApi.generateUploadUrl({
             fileType: file.type,
             fileSize: file.size,
             fileName: file.name
