@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 s3_client = boto3.client('s3')
 
 ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 def lambda_handler(event, context):
     """
@@ -39,9 +38,9 @@ def lambda_handler(event, context):
         if not file_type or file_type not in ALLOWED_MIME_TYPES:
             return error_response(400, 'Invalid file type. Allowed: JPEG, PNG, WebP', 'ValidationError')
 
-        # Validate file size
-        if not file_size or file_size > MAX_FILE_SIZE:
-            return error_response(400, f'File too large (max {MAX_FILE_SIZE} bytes)', 'ValidationError')
+        # Validate file size is provided
+        if not file_size or file_size <= 0:
+            return error_response(400, 'Invalid file size', 'ValidationError')
 
         # Generate UUID for photo
         photo_id = str(uuid.uuid4())

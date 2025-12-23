@@ -197,3 +197,56 @@ output "cognito_authorizer_id" {
   description = "API Gateway Cognito authorizer ID"
   value       = aws_api_gateway_authorizer.cognito_authorizer.id
 }
+
+# ==============================================================================
+# PHASE 6D OUTPUTS: SES Email Service
+# ==============================================================================
+
+output "ses_domain_verification_token" {
+  description = "SES domain verification token - Add this as a TXT record in Route 53"
+  value       = aws_ses_domain_identity.main.verification_token
+}
+
+output "ses_dkim_tokens" {
+  description = "SES DKIM tokens - Add these as CNAME records in Route 53 for email authentication"
+  value       = aws_ses_domain_dkim.main.dkim_tokens
+}
+
+output "ses_verification_status" {
+  description = "SES domain verification status"
+  value       = aws_ses_domain_identity.main.verification_status
+}
+
+output "ses_setup_instructions" {
+  description = "Manual steps required to complete SES setup"
+  value = <<-EOT
+
+  ========================================
+  SES SETUP INSTRUCTIONS
+  ========================================
+
+  1. VERIFY RECIPIENT EMAILS
+     Check inbox for each recipient email and click the verification link:
+${join("\n", [for email in var.contact_form_recipient_emails : "     - ${email}"])}
+
+  2. ADD DNS RECORDS TO ROUTE 53
+
+     a) Domain Verification (TXT record):
+        Name:  _amazonses.${var.domain_name}
+        Type:  TXT
+        Value: ${aws_ses_domain_identity.main.verification_token}
+
+     b) DKIM Records (3 CNAME records for email authentication):
+${join("\n", [for token in aws_ses_domain_dkim.main.dkim_tokens : "        Name:  ${token}._domainkey.${var.domain_name}\n        Type:  CNAME\n        Value: ${token}.dkim.amazonses.com\n"])}
+
+  3. WAIT FOR VERIFICATION
+     - Domain verification: 24-72 hours after adding DNS records
+     - Check status: aws ses get-identity-verification-attributes --identities ${var.domain_name}
+
+  4. TEST CONTACT FORM
+     - Contact form will only send to verified emails (sandbox mode)
+     - To send to any email, request SES production access (takes ~24 hours)
+
+  ========================================
+  EOT
+}

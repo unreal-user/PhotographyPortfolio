@@ -660,6 +660,57 @@ resource "aws_s3_bucket_policy" "photos" {
 }
 
 # ==============================================================================
+# SES (Simple Email Service) - Contact Form
+# ==============================================================================
+
+# Verify domain identity for sending from @domain.com
+resource "aws_ses_domain_identity" "main" {
+  domain = var.domain_name
+}
+
+# DKIM records for email authentication
+resource "aws_ses_domain_dkim" "main" {
+  domain = aws_ses_domain_identity.main.domain
+}
+
+# Verify recipient emails (for sandbox mode)
+resource "aws_ses_email_identity" "recipients" {
+  for_each = toset(var.contact_form_recipient_emails)
+  email    = each.value
+}
+
+# IAM policy for Lambda to send emails via SES
+resource "aws_iam_policy" "ses_send_email" {
+  name        = "${var.project_name}-ses-send-email"
+  description = "Allow Lambda to send emails via SES"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ses:SendEmail",
+          "ses:SendRawEmail"
+        ]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "ses:FromAddress" = var.contact_form_sender_email
+          }
+        }
+      }
+    ]
+  })
+}
+
+# Attach SES policy to Lambda execution role
+resource "aws_iam_role_policy_attachment" "lambda_ses" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = aws_iam_policy.ses_send_email.arn
+}
+
+# ==============================================================================
 # PHASE 4: DynamoDB Table for Photo Metadata
 # ==============================================================================
 
@@ -1146,6 +1197,39 @@ resource "aws_lambda_function" "delete_photo" {
   }
 }
 
+# Contact Form Lambda (Phase 6d)
+resource "aws_lambda_function" "contact_form" {
+  filename      = "${path.module}/contact_form.zip"
+  function_name = "${var.project_name}-contact-form"
+  role          = aws_iam_role.lambda_execution_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.12"
+  timeout       = 30
+  memory_size   = 128
+
+  source_code_hash = filebase64sha256("${path.module}/contact_form.zip")
+
+  environment {
+    variables = {
+      SENDER_EMAIL     = var.contact_form_sender_email
+      RECIPIENT_EMAILS = join(",", var.contact_form_recipient_emails)
+      AWS_REGION       = var.aws_region
+    }
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.lambda_basic_execution,
+    aws_iam_role_policy_attachment.lambda_ses
+  ]
+
+  tags = {
+    Name        = "${var.project_name}-contact-form"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "6d"
+  }
+}
+
 # ====================
 # API Gateway REST API
 # ====================
@@ -1311,6 +1395,79 @@ resource "aws_api_gateway_integration" "delete_photo_integration" {
 }
 
 # ====================
+# Contact Form Endpoint (Phase 6d)
+# ====================
+
+# /contact resource
+resource "aws_api_gateway_resource" "contact" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  parent_id   = aws_api_gateway_rest_api.photos_api.root_resource_id
+  path_part   = "contact"
+}
+
+# POST /contact
+resource "aws_api_gateway_method" "contact_post" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.contact.id
+  http_method   = "POST"
+  authorization = "NONE"  # Public endpoint
+}
+
+resource "aws_api_gateway_integration" "contact_post" {
+  rest_api_id             = aws_api_gateway_rest_api.photos_api.id
+  resource_id             = aws_api_gateway_resource.contact.id
+  http_method             = aws_api_gateway_method.contact_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.contact_form.invoke_arn
+}
+
+# OPTIONS /contact (CORS preflight)
+resource "aws_api_gateway_method" "contact_options" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.contact.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "contact_options" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.contact.id
+  http_method = aws_api_gateway_method.contact_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "contact_options" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.contact.id
+  http_method = aws_api_gateway_method.contact_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "contact_options" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.contact.id
+  http_method = aws_api_gateway_method.contact_options.http_method
+  status_code = aws_api_gateway_method_response.contact_options.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
+# ====================
 # Lambda Permissions for API Gateway
 # ====================
 
@@ -1358,6 +1515,14 @@ resource "aws_lambda_permission" "api_gateway_delete_photo" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.delete_photo.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "api_gateway_contact_form" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.contact_form.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
 }
@@ -1519,8 +1684,10 @@ resource "aws_api_gateway_deployment" "photos_api_deployment" {
     redeployment = sha1(jsonencode([
       aws_api_gateway_method.list_photos_get.id,
       aws_api_gateway_method.get_photo_get.id,
+      aws_api_gateway_method.contact_post.id,
       aws_api_gateway_method.list_photos_get.authorization,
       aws_api_gateway_method.get_photo_get.authorization,
+      aws_api_gateway_method.contact_post.authorization,
     ]))
   }
 
@@ -1531,6 +1698,7 @@ resource "aws_api_gateway_deployment" "photos_api_deployment" {
     aws_api_gateway_integration.get_photo_integration,
     aws_api_gateway_integration.update_photo_integration,
     aws_api_gateway_integration.delete_photo_integration,
+    aws_api_gateway_integration.contact_post,
     aws_api_gateway_integration_response.upload_url_options_integration_response,
     aws_api_gateway_integration_response.photos_options_integration_response,
     aws_api_gateway_integration_response.photo_by_id_options_integration_response
