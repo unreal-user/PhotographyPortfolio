@@ -212,13 +212,9 @@ output "ses_dkim_tokens" {
   value       = aws_ses_domain_dkim.main.dkim_tokens
 }
 
-output "ses_verification_status" {
-  description = "SES domain verification status"
-  value       = aws_ses_domain_identity.main.verification_status
-}
-
 output "ses_setup_instructions" {
   description = "Manual steps required to complete SES setup"
+  sensitive   = true
   value = <<-EOT
 
   ========================================

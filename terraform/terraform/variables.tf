@@ -32,5 +32,5 @@ variable "contact_form_sender_email" {
 variable "contact_form_recipient_emails" {
   description = "List of email addresses to receive contact form notifications"
   type        = list(string)
-  sensitive   = true
+  # Note: Cannot use sensitive = true because this is used in for_each
 }
