@@ -35,11 +35,7 @@ const UserMenu: React.FC = () => {
   };
 
   if (!isAuthenticated) {
-    return (
-      <Link to="/login" className="login-link">
-        Login
-      </Link>
-    );
+    return null;
   }
 
   return (

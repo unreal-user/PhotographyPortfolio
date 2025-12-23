@@ -1,11 +1,177 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Hero } from '../components/Hero/Hero';
+import './ContactPage.css';
 
 const ContactPage: React.FC = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // TODO: Backend implementation in Phase 6d
+    setIsSubmitting(true);
+
+    // Placeholder for future API call
+    setTimeout(() => {
+      console.log('Form data:', formData);
+      setIsSubmitting(false);
+      setSubmitStatus('success');
+
+      // Reset form after successful submission
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
+
+      // Reset success message after 5 seconds
+      setTimeout(() => setSubmitStatus('idle'), 5000);
+    }, 1000);
+  };
+
   return (
-    <div>
-      <h1>Contact Page</h1>
-      <p>This is the contact page. Add your contact form here.</p>
-    </div>
+    <>
+      <Hero
+        imageUrl="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?q=80&w=2072&auto=format&fit=crop"
+        title="Get In Touch"
+        subtitle="Let's create something beautiful together"
+      />
+
+      <div className="contact-container">
+        <div className="contact-content">
+          <section className="contact-info">
+            <h2 className="contact-heading">Let's Talk</h2>
+            <p className="contact-text">
+              I'm always excited to hear about new projects and opportunities.
+              Whether you have a question, want to book a session, or just want
+              to say hello, feel free to reach out.
+            </p>
+            <p className="contact-text">
+              I typically respond within 24-48 hours. Looking forward to connecting with you!
+            </p>
+
+            <div className="contact-details">
+              <div className="contact-detail-item">
+                <h3 className="contact-detail-label">Email</h3>
+                <p className="contact-detail-value">hello@example.com</p>
+              </div>
+              <div className="contact-detail-item">
+                <h3 className="contact-detail-label">Location</h3>
+                <p className="contact-detail-value">Available for travel worldwide</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="contact-form-section">
+            <form className="contact-form" onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="name" className="form-label">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  className="form-input"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  placeholder="Your name"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="email" className="form-label">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  className="form-input"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  placeholder="your.email@example.com"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="subject" className="form-label">
+                  Subject *
+                </label>
+                <input
+                  type="text"
+                  id="subject"
+                  name="subject"
+                  className="form-input"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  required
+                  placeholder="What's this about?"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="message" className="form-label">
+                  Message *
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  className="form-textarea"
+                  value={formData.message}
+                  onChange={handleChange}
+                  required
+                  rows={6}
+                  placeholder="Tell me about your project or inquiry..."
+                />
+              </div>
+
+              {submitStatus === 'success' && (
+                <div className="form-success">
+                  Message sent successfully! I'll get back to you soon.
+                </div>
+              )}
+
+              {submitStatus === 'error' && (
+                <div className="form-error">
+                  Something went wrong. Please try again or email me directly.
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="form-submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Sending...' : 'Send Message'}
+              </button>
+
+              <p className="form-note">
+                * Required fields
+              </p>
+            </form>
+          </section>
+        </div>
+      </div>
+    </>
   );
 };
 

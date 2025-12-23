@@ -50,7 +50,7 @@
 
 .user-email {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--text-primary, #1a1a1a);
+  color: var(--header-text);
   max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
