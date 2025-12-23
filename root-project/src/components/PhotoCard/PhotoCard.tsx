@@ -9,6 +9,8 @@ interface PhotoCardProps {
   onEdit: () => void;
   onPublish?: () => void; // Only for pending photos
   onArchive: () => void;
+  isSelected?: boolean; // Phase 6d: Checkbox selection
+  onSelect?: (photoId: string) => void; // Phase 6d: Checkbox selection
 }
 
 const PhotoCard: React.FC<PhotoCardProps> = ({
@@ -17,10 +19,10 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
   onEdit,
   onPublish,
   onArchive,
+  isSelected = false,
+  onSelect,
 }) => {
   // Generate image URL from S3 key
-  // TODO: Replace with CloudFront URL from env when available
-  // For now, use originalKey directly (will work after deployment)
   const imageUrl = photo.thumbnailUrl || photo.fullResUrl || `/api/photos/${photo.originalKey}`;
 
   // Format date
@@ -33,8 +35,33 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
     });
   };
 
+  // Handle card click for selection (Phase 6d)
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't toggle selection if clicking on a button or the image wrapper
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('.photo-card-image-wrapper')) {
+      return;
+    }
+    onSelect?.(photo.photoId);
+  };
+
   return (
-    <div className="photo-card">
+    <div
+      className={`photo-card ${isSelected ? 'photo-card--selected' : ''}`}
+      onClick={handleCardClick}
+      style={{ cursor: onSelect ? 'pointer' : 'default' }}
+    >
+      {onSelect && (
+        <div className="photo-card-checkbox">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onSelect(photo.photoId)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       <div className="photo-card-image-wrapper" onClick={onView}>
         <img
           src={imageUrl}

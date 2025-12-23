@@ -224,4 +224,23 @@ export const photoApi = {
 
     return response.json();
   },
+
+  /**
+   * Bulk update multiple photos (Phase 6d)
+   */
+  async bulkUpdatePhotos(photoIds: string[], updates: Partial<UpdatePhotoRequest>): Promise<{ message: string; succeeded: string[]; failed: any[] }> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/photos/bulk`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ photoIds, updates }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to bulk update photos' }));
+      throw new Error(error.error || 'Failed to bulk update photos');
+    }
+
+    return response.json();
+  },
 };

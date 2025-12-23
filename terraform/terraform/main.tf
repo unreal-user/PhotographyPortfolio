@@ -1230,6 +1230,37 @@ resource "aws_lambda_function" "contact_form" {
   }
 }
 
+# Bulk Update Photos Lambda (Phase 6d)
+resource "aws_lambda_function" "bulk_update_photos" {
+  filename      = "${path.module}/bulk_update_photos.zip"
+  function_name = "${var.project_name}-bulk-update-photos"
+  role          = aws_iam_role.lambda_execution_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.12"
+  timeout       = 60  # Longer timeout for batch operations
+  memory_size   = 256
+
+  source_code_hash = filebase64sha256("${path.module}/bulk_update_photos.zip")
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE_NAME = aws_dynamodb_table.photos.name
+    }
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.lambda_basic_execution,
+    aws_iam_role_policy_attachment.lambda_dynamodb
+  ]
+
+  tags = {
+    Name        = "${var.project_name}-bulk-update-photos"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Phase       = "6d"
+  }
+}
+
 # ====================
 # API Gateway REST API
 # ====================
@@ -1468,6 +1499,80 @@ resource "aws_api_gateway_integration_response" "contact_options" {
 }
 
 # ====================
+# Bulk Update Photos Endpoint (Phase 6d)
+# ====================
+
+# /photos/bulk resource
+resource "aws_api_gateway_resource" "photos_bulk" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  parent_id   = aws_api_gateway_resource.photos.id
+  path_part   = "bulk"
+}
+
+# POST /photos/bulk
+resource "aws_api_gateway_method" "bulk_update_post" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.photos_bulk.id
+  http_method   = "POST"
+  authorization = "COGNITO_USER_POOLS"  # Require authentication
+  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+}
+
+resource "aws_api_gateway_integration" "bulk_update_post" {
+  rest_api_id             = aws_api_gateway_rest_api.photos_api.id
+  resource_id             = aws_api_gateway_resource.photos_bulk.id
+  http_method             = aws_api_gateway_method.bulk_update_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.bulk_update_photos.invoke_arn
+}
+
+# OPTIONS /photos/bulk (CORS preflight)
+resource "aws_api_gateway_method" "bulk_update_options" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.photos_bulk.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "bulk_update_options" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.photos_bulk.id
+  http_method = aws_api_gateway_method.bulk_update_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "bulk_update_options" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.photos_bulk.id
+  http_method = aws_api_gateway_method.bulk_update_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "bulk_update_options" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.photos_bulk.id
+  http_method = aws_api_gateway_method.bulk_update_options.http_method
+  status_code = aws_api_gateway_method_response.bulk_update_options.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
+# ====================
 # Lambda Permissions for API Gateway
 # ====================
 
@@ -1523,6 +1628,14 @@ resource "aws_lambda_permission" "api_gateway_contact_form" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.contact_form.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "api_gateway_bulk_update_photos" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.bulk_update_photos.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
 }
@@ -1685,9 +1798,11 @@ resource "aws_api_gateway_deployment" "photos_api_deployment" {
       aws_api_gateway_method.list_photos_get.id,
       aws_api_gateway_method.get_photo_get.id,
       aws_api_gateway_method.contact_post.id,
+      aws_api_gateway_method.bulk_update_post.id,
       aws_api_gateway_method.list_photos_get.authorization,
       aws_api_gateway_method.get_photo_get.authorization,
       aws_api_gateway_method.contact_post.authorization,
+      aws_api_gateway_method.bulk_update_post.authorization,
     ]))
   }
 
@@ -1699,6 +1814,7 @@ resource "aws_api_gateway_deployment" "photos_api_deployment" {
     aws_api_gateway_integration.update_photo_integration,
     aws_api_gateway_integration.delete_photo_integration,
     aws_api_gateway_integration.contact_post,
+    aws_api_gateway_integration.bulk_update_post,
     aws_api_gateway_integration_response.upload_url_options_integration_response,
     aws_api_gateway_integration_response.photos_options_integration_response,
     aws_api_gateway_integration_response.photo_by_id_options_integration_response

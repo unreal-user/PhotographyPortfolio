@@ -5,6 +5,7 @@ import PhotoCard from '../../components/PhotoCard/PhotoCard';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 import UploadPhotoModal from '../../components/UploadPhotoModal/UploadPhotoModal';
 import EditPhotoModal from '../../components/EditPhotoModal/EditPhotoModal';
+import { BatchUploadModal } from '../../components/BatchUploadModal/BatchUploadModal';
 import './AdminDashboard.css';
 
 type TabType = 'pending' | 'published' | 'archived';
@@ -16,7 +17,11 @@ const AdminDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Modal states (placeholders for Phase 6.4-6.5)
+  // Phase 6d: Selection state
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
+  const [showBatchUploadModal, setShowBatchUploadModal] = useState(false);
+
+  // Modal states
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -35,6 +40,7 @@ const AdminDashboard: React.FC = () => {
   // Load photos when tab changes
   useEffect(() => {
     loadPhotos();
+    setSelectedPhotoIds(new Set()); // Clear selection on tab change
   }, [activeTab]);
 
   const loadPhotos = async () => {
@@ -42,13 +48,127 @@ const AdminDashboard: React.FC = () => {
     setError(null);
 
     try {
-      const response = await photoApi.listPhotos(activeTab);
+      const response = await photoApi.listPhotos(activeTab, 100);
       setPhotos(response.photos);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load photos');
       console.error('Error loading photos:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Phase 6d: Selection handlers
+  const handleSelect = (photoId: string) => {
+    setSelectedPhotoIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(photoId)) {
+        newSet.delete(photoId);
+      } else {
+        newSet.add(photoId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedPhotoIds.size === photos.length) {
+      setSelectedPhotoIds(new Set());
+    } else {
+      setSelectedPhotoIds(new Set(photos.map(p => p.photoId)));
+    }
+  };
+
+  // Phase 6d: Bulk actions
+  const handleBulkPublish = async () => {
+    if (selectedPhotoIds.size === 0) return;
+    if (selectedPhotoIds.size > 100) {
+      alert('Maximum 100 photos can be bulk updated at once. Please select fewer photos.');
+      return;
+    }
+
+    try {
+      await photoApi.bulkUpdatePhotos(Array.from(selectedPhotoIds), { status: 'published' });
+      setSelectedPhotoIds(new Set());
+      loadPhotos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to publish photos');
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    if (selectedPhotoIds.size === 0) return;
+    if (selectedPhotoIds.size > 100) {
+      alert('Maximum 100 photos can be bulk updated at once. Please select fewer photos.');
+      return;
+    }
+
+    if (!confirm(`Archive ${selectedPhotoIds.size} photo(s)?`)) return;
+
+    try {
+      await photoApi.bulkUpdatePhotos(Array.from(selectedPhotoIds), { status: 'archived' });
+      setSelectedPhotoIds(new Set());
+      loadPhotos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to archive photos');
+    }
+  };
+
+  const handleBulkAssignGallery = async () => {
+    if (selectedPhotoIds.size === 0) return;
+    if (selectedPhotoIds.size > 100) {
+      alert('Maximum 100 photos can be bulk updated at once. Please select fewer photos.');
+      return;
+    }
+
+    // Get unique galleries from current photos
+    const existingGalleries = Array.from(new Set(
+      photos
+        .map(p => p.gallery)
+        .filter(g => g && g !== 'Uncategorized')
+    )).sort();
+
+    // Create select dropdown HTML
+    const gallerySelectHTML = `
+      <div>
+        <label for="gallery-select" style="display: block; margin-bottom: 8px;">Select gallery:</label>
+        <select id="gallery-select" style="width: 100%; padding: 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc;">
+          ${existingGalleries.map(g => `<option value="${g}">${g}</option>`).join('')}
+          <option value="__custom__">+ New Gallery</option>
+        </select>
+        <input id="custom-gallery" type="text" placeholder="Enter new gallery name" style="width: 100%; margin-top: 8px; padding: 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; display: none;">
+      </div>
+    `;
+
+    // Show custom input when "New Gallery" is selected
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = gallerySelectHTML;
+    const selectEl = tempDiv.querySelector('#gallery-select') as HTMLSelectElement;
+    const customInputEl = tempDiv.querySelector('#custom-gallery') as HTMLInputElement;
+
+    if (selectEl && customInputEl) {
+      selectEl.addEventListener('change', () => {
+        if (selectEl.value === '__custom__') {
+          customInputEl.style.display = 'block';
+        } else {
+          customInputEl.style.display = 'none';
+        }
+      });
+    }
+
+    // Simple prompt-based approach (can be enhanced with a proper modal later)
+    const galleryName = prompt(
+      `Assign ${selectedPhotoIds.size} photo(s) to gallery:\n\nExisting galleries: ${existingGalleries.length > 0 ? existingGalleries.join(', ') : 'None'}\n\nEnter gallery name:`
+    );
+
+    if (!galleryName || galleryName.trim() === '') return;
+
+    try {
+      await photoApi.bulkUpdatePhotos(Array.from(selectedPhotoIds), { gallery: galleryName.trim() });
+      setSelectedPhotoIds(new Set());
+      loadPhotos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to assign gallery');
     }
   };
 
@@ -92,7 +212,6 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleView = (photo: Photo) => {
-    // TODO: Phase 6.4 - Open photo modal
     console.log('View photo:', photo.photoId);
   };
 
@@ -105,17 +224,47 @@ const AdminDashboard: React.FC = () => {
     setShowUploadModal(true);
   };
 
+  const handleBatchUploadClick = () => {
+    setShowBatchUploadModal(true);
+  };
+
+  const hasSelection = selectedPhotoIds.size > 0;
+
   return (
     <div className="admin-dashboard">
       <div className="admin-dashboard-header">
         <h1>Admin Dashboard</h1>
-        <button
-          type="button"
-          className="admin-dashboard-upload-button"
-          onClick={handleUploadClick}
-        >
-          Upload Photo
-        </button>
+        <div className="admin-dashboard-header-actions">
+          {hasSelection ? (
+            <>
+              <span className="selection-count">{selectedPhotoIds.size} selected</span>
+              <button type="button" className="btn-select-all" onClick={handleSelectAll}>
+                {selectedPhotoIds.size === photos.length ? 'Deselect All' : 'Select All'}
+              </button>
+              <button type="button" className="btn-bulk-action" onClick={handleBulkPublish}>
+                Publish Selected
+              </button>
+              <button type="button" className="btn-bulk-action" onClick={handleBulkArchive}>
+                Archive Selected
+              </button>
+              <button type="button" className="btn-bulk-action" onClick={handleBulkAssignGallery}>
+                Assign Gallery
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" className="btn-select-all" onClick={handleSelectAll}>
+                Select All
+              </button>
+              <button type="button" className="admin-dashboard-upload-button" onClick={handleUploadClick}>
+                Upload Photo
+              </button>
+              <button type="button" className="admin-dashboard-upload-button" onClick={handleBatchUploadClick}>
+                Batch Upload
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="admin-dashboard-tabs">
@@ -157,13 +306,23 @@ const AdminDashboard: React.FC = () => {
         <div className="admin-dashboard-empty">
           <p>No {activeTab} photos yet.</p>
           {activeTab === 'pending' && (
-            <button
-              type="button"
-              className="admin-dashboard-upload-button"
-              onClick={handleUploadClick}
-            >
-              Upload Your First Photo
-            </button>
+            <>
+              <button
+                type="button"
+                className="admin-dashboard-upload-button"
+                onClick={handleUploadClick}
+              >
+                Upload Your First Photo
+              </button>
+              <button
+                type="button"
+                className="admin-dashboard-upload-button"
+                onClick={handleBatchUploadClick}
+                style={{ marginLeft: '1rem' }}
+              >
+                Batch Upload
+              </button>
+            </>
           )}
         </div>
       ) : (
@@ -176,6 +335,8 @@ const AdminDashboard: React.FC = () => {
               onEdit={() => handleEdit(photo)}
               onPublish={photo.status === 'pending' ? () => handlePublish(photo) : undefined}
               onArchive={() => handleArchive(photo)}
+              isSelected={selectedPhotoIds.has(photo.photoId)}
+              onSelect={handleSelect}
             />
           ))}
         </div>
@@ -211,6 +372,11 @@ const AdminDashboard: React.FC = () => {
           setSelectedPhoto(null);
         }}
         onPhotoUpdated={loadPhotos}
+      />
+
+      <BatchUploadModal
+        onClose={() => setShowBatchUploadModal(false)}
+        onComplete={loadPhotos}
       />
     </div>
   );

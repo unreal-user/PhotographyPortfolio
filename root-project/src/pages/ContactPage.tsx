@@ -22,17 +22,25 @@ const ContactPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // TODO: Backend implementation in Phase 6d
     setIsSubmitting(true);
+    setSubmitStatus('idle');
 
-    // Placeholder for future API call
-    setTimeout(() => {
-      console.log('Form data:', formData);
-      setIsSubmitting(false);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to send message' }));
+        throw new Error(error.error || 'Failed to send message');
+      }
+
+      // Success
       setSubmitStatus('success');
-
-      // Reset form after successful submission
       setFormData({
         name: '',
         email: '',
@@ -42,7 +50,13 @@ const ContactPage: React.FC = () => {
 
       // Reset success message after 5 seconds
       setTimeout(() => setSubmitStatus('idle'), 5000);
-    }, 1000);
+
+    } catch (error) {
+      console.error('Contact form error:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
