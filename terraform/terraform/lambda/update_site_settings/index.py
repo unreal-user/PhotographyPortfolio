@@ -90,6 +90,42 @@ def lambda_handler(event, context):
                 if photo_response['Item'].get('status') != 'published':
                     return error_response(400, 'Only published photos can be used as hero image', 'ValidationError', allowed_origin)
 
+        # Validate about settings
+        if setting_id == 'about':
+            about_photo_id = body.get('heroPhotoId')
+
+            # Validate required fields
+            if not body.get('title'):
+                return error_response(400, 'Title is required', 'ValidationError', allowed_origin)
+            if not body.get('subtitle'):
+                return error_response(400, 'Subtitle is required', 'ValidationError', allowed_origin)
+
+            # Validate sections array
+            sections = body.get('sections', [])
+            if not isinstance(sections, list):
+                return error_response(400, 'Sections must be an array', 'ValidationError', allowed_origin)
+
+            for i, section in enumerate(sections):
+                if not isinstance(section, dict):
+                    return error_response(400, f'Section {i + 1} must be an object', 'ValidationError', allowed_origin)
+                if not section.get('heading'):
+                    return error_response(400, f'Section {i + 1} heading is required', 'ValidationError', allowed_origin)
+                if not section.get('body'):
+                    return error_response(400, f'Section {i + 1} body is required', 'ValidationError', allowed_origin)
+
+            # Validate photo exists and is published
+            if about_photo_id:
+                photos_table = dynamodb.Table(os.environ['PHOTOS_TABLE_NAME'])
+                photo_response = photos_table.get_item(
+                    Key={'photoId': about_photo_id}
+                )
+
+                if 'Item' not in photo_response:
+                    return error_response(400, 'Photo not found', 'ValidationError', allowed_origin)
+
+                if photo_response['Item'].get('status') != 'published':
+                    return error_response(400, 'Only published photos can be used as about hero image', 'ValidationError', allowed_origin)
+
         # Update settings in DynamoDB
         settings_table = dynamodb.Table(os.environ['SITE_SETTINGS_TABLE_NAME'])
         now = datetime.utcnow().isoformat() + 'Z'

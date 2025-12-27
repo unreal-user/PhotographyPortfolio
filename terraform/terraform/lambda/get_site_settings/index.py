@@ -69,6 +69,25 @@ def lambda_handler(event, context):
                     'title': 'Photography Portfolio',
                     'subtitle': 'Capturing life one frame at a time'
                 }, allowed_origin)
+            # Return defaults for about settings
+            if setting_id == 'about':
+                return success_response({
+                    'settingId': 'about',
+                    'heroPhotoId': None,
+                    'heroImageUrl': None,
+                    'title': 'About Me',
+                    'subtitle': 'Telling stories through the lens',
+                    'sections': [
+                        {
+                            'heading': 'My Journey',
+                            'body': 'Photography has been my passion for over a decade. What started as a hobby quickly became a way of seeing and experiencing the world.\n\nEvery photograph is an opportunity to freeze time, to capture the fleeting beauty of a moment that will never come again.'
+                        },
+                        {
+                            'heading': 'My Approach',
+                            'body': 'My photography style blends technical precision with artistic intuition. I believe that the best photographs are those that evoke emotion and tell a story.\n\nI work primarily with natural light and believe in minimal post-processing, letting the authentic beauty of each moment shine through.'
+                        }
+                    ]
+                }, allowed_origin)
             return error_response(404, 'Setting not found', 'NotFoundError', allowed_origin)
 
         item = response['Item']
@@ -76,6 +95,23 @@ def lambda_handler(event, context):
 
         # For hero settings, resolve photoId to CloudFront URL
         if setting_id == 'hero' and data.get('heroPhotoId'):
+            cloudfront_domain = os.environ.get('CLOUDFRONT_DOMAIN_NAME')
+            photos_table = dynamodb.Table(os.environ['PHOTOS_TABLE_NAME'])
+
+            photo_response = photos_table.get_item(
+                Key={'photoId': data['heroPhotoId']}
+            )
+
+            if 'Item' in photo_response:
+                photo = photo_response['Item']
+                original_key = photo.get('originalKey', '')
+                data['heroImageUrl'] = f"https://{cloudfront_domain}/{original_key}"
+            else:
+                # Photo was deleted, clear the reference
+                data['heroImageUrl'] = None
+
+        # For about settings, resolve photoId to CloudFront URL
+        if setting_id == 'about' and data.get('heroPhotoId'):
             cloudfront_domain = os.environ.get('CLOUDFRONT_DOMAIN_NAME')
             photos_table = dynamodb.Table(os.environ['PHOTOS_TABLE_NAME'])
 

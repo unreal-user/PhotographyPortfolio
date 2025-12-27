@@ -254,6 +254,9 @@
 /* Settings Section */
 .admin-dashboard-settings {
   padding: var(--space-lg) 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-lg);
 }
 
 .admin-settings-card {
@@ -261,7 +264,6 @@
   border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: var(--space-xl);
-  max-width: 500px;
 }
 
 .admin-settings-card h3 {
