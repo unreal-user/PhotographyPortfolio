@@ -10,7 +10,8 @@ import HeroSettingsModal from '../../components/HeroSettingsModal/HeroSettingsMo
 import AboutSettingsModal from '../../components/AboutSettingsModal/AboutSettingsModal';
 import './AdminDashboard.css';
 
-type TabType = 'pending' | 'published' | 'archived' | 'settings';
+type PhotoStatus = 'pending' | 'published' | 'archived';
+type TabType = PhotoStatus | 'settings';
 
 const AdminDashboard: React.FC = () => {
   // State
@@ -50,6 +51,9 @@ const AdminDashboard: React.FC = () => {
   }, [activeTab]);
 
   const loadPhotos = async () => {
+    // Type guard: ensure activeTab is a valid PhotoStatus
+    if (activeTab === 'settings') return;
+
     setIsLoading(true);
     setError(null);
 
