@@ -366,9 +366,9 @@ resource "aws_cognito_user_pool_client" "web_client" {
   ]
 
   # Token validity
-  id_token_validity      = 60  # 1 hour
-  access_token_validity  = 60  # 1 hour
-  refresh_token_validity = 30  # 30 days
+  id_token_validity      = 60 # 1 hour
+  access_token_validity  = 60 # 1 hour
+  refresh_token_validity = 30 # 30 days
 
   token_validity_units {
     id_token      = "minutes"
@@ -377,9 +377,9 @@ resource "aws_cognito_user_pool_client" "web_client" {
   }
 
   # Security settings
-  generate_secret                      = false # Public client (SPA)
-  prevent_user_existence_errors        = "ENABLED"
-  enable_token_revocation              = true
+  generate_secret                               = false # Public client (SPA)
+  prevent_user_existence_errors                 = "ENABLED"
+  enable_token_revocation                       = true
   enable_propagate_additional_user_context_data = false
 
   # OAuth flows (disabled for now, not using hosted UI)
@@ -866,6 +866,15 @@ resource "aws_iam_policy" "lambda_s3_copy_policy" {
           "${aws_s3_bucket.photos.arn}/originals/*",
           "${aws_s3_bucket.photos.arn}/archive/*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:DeleteObject"
+        ]
+        Resource = [
+          "${aws_s3_bucket.photos.arn}/archive/*"
+        ]
       }
     ]
   })
@@ -898,6 +907,7 @@ resource "aws_iam_policy" "lambda_dynamodb_policy" {
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
           "dynamodb:Query"
         ]
         Resource = [
@@ -1015,8 +1025,8 @@ resource "aws_lambda_function" "generate_upload_url" {
 
   environment {
     variables = {
-      PHOTOS_BUCKET_NAME  = aws_s3_bucket.photos.id
-      UPLOAD_EXPIRATION   = "300"
+      PHOTOS_BUCKET_NAME = aws_s3_bucket.photos.id
+      UPLOAD_EXPIRATION  = "300"
     }
   }
 
@@ -1236,7 +1246,7 @@ resource "aws_lambda_function" "bulk_update_photos" {
   role          = aws_iam_role.lambda_execution_role.arn
   handler       = "index.lambda_handler"
   runtime       = "python3.12"
-  timeout       = 60  # Longer timeout for batch operations
+  timeout       = 60 # Longer timeout for batch operations
   memory_size   = 256
 
   source_code_hash = filebase64sha256("${path.module}/bulk_update_photos.zip")
@@ -1440,7 +1450,7 @@ resource "aws_api_gateway_method" "contact_post" {
   rest_api_id   = aws_api_gateway_rest_api.photos_api.id
   resource_id   = aws_api_gateway_resource.contact.id
   http_method   = "POST"
-  authorization = "NONE"  # Public endpoint
+  authorization = "NONE" # Public endpoint
 }
 
 resource "aws_api_gateway_integration" "contact_post" {
@@ -1513,7 +1523,7 @@ resource "aws_api_gateway_method" "bulk_update_post" {
   rest_api_id   = aws_api_gateway_rest_api.photos_api.id
   resource_id   = aws_api_gateway_resource.photos_bulk.id
   http_method   = "POST"
-  authorization = "COGNITO_USER_POOLS"  # Require authentication
+  authorization = "COGNITO_USER_POOLS" # Require authentication
   authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
 }
 
