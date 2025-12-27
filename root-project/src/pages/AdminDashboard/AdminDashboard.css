@@ -250,3 +250,30 @@
     background-color: #374151;
   }
 }
+
+/* Settings Section */
+.admin-dashboard-settings {
+  padding: var(--space-lg) 0;
+}
+
+.admin-settings-card {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--space-xl);
+  max-width: 500px;
+}
+
+.admin-settings-card h3 {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.admin-settings-card p {
+  margin: 0 0 var(--space-lg) 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}

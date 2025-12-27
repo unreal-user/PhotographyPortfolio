@@ -6,9 +6,10 @@ import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 import UploadPhotoModal from '../../components/UploadPhotoModal/UploadPhotoModal';
 import EditPhotoModal from '../../components/EditPhotoModal/EditPhotoModal';
 import { BatchUploadModal } from '../../components/BatchUploadModal/BatchUploadModal';
+import HeroSettingsModal from '../../components/HeroSettingsModal/HeroSettingsModal';
 import './AdminDashboard.css';
 
-type TabType = 'pending' | 'published' | 'archived';
+type TabType = 'pending' | 'published' | 'archived' | 'settings';
 
 const AdminDashboard: React.FC = () => {
   // State
@@ -20,6 +21,7 @@ const AdminDashboard: React.FC = () => {
   // Phase 6d: Selection state
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
   const [showBatchUploadModal, setShowBatchUploadModal] = useState(false);
+  const [showHeroSettingsModal, setShowHeroSettingsModal] = useState(false);
 
   // Modal states
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -37,10 +39,12 @@ const AdminDashboard: React.FC = () => {
     action: null,
   });
 
-  // Load photos when tab changes
+  // Load photos when tab changes (except for settings tab)
   useEffect(() => {
-    loadPhotos();
-    setSelectedPhotoIds(new Set()); // Clear selection on tab change
+    if (activeTab !== 'settings') {
+      loadPhotos();
+      setSelectedPhotoIds(new Set()); // Clear selection on tab change
+    }
   }, [activeTab]);
 
   const loadPhotos = async () => {
@@ -289,6 +293,13 @@ const AdminDashboard: React.FC = () => {
         >
           Archived
         </button>
+        <button
+          type="button"
+          className={`admin-dashboard-tab ${activeTab === 'settings' ? 'admin-dashboard-tab--active' : ''}`}
+          onClick={() => setActiveTab('settings')}
+        >
+          Settings
+        </button>
       </div>
 
       {error && (
@@ -298,7 +309,21 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {isLoading ? (
+      {activeTab === 'settings' ? (
+        <div className="admin-dashboard-settings">
+          <div className="admin-settings-card">
+            <h3>Hero Section</h3>
+            <p>Configure the hero image, title, and subtitle shown on the homepage.</p>
+            <button
+              type="button"
+              className="admin-dashboard-upload-button"
+              onClick={() => setShowHeroSettingsModal(true)}
+            >
+              Edit Hero Settings
+            </button>
+          </div>
+        </div>
+      ) : isLoading ? (
         <div className="admin-dashboard-loading">
           <p>Loading photos...</p>
         </div>
@@ -378,6 +403,12 @@ const AdminDashboard: React.FC = () => {
         isOpen={showBatchUploadModal}
         onClose={() => setShowBatchUploadModal(false)}
         onComplete={loadPhotos}
+      />
+
+      <HeroSettingsModal
+        isOpen={showHeroSettingsModal}
+        onClose={() => setShowHeroSettingsModal(false)}
+        onSettingsUpdated={() => setShowHeroSettingsModal(false)}
       />
     </div>
   );
