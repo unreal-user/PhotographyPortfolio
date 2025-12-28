@@ -65,7 +65,7 @@
 
 /* Skeleton Loading State */
 .hero-skeleton {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  background: linear-gradient(135deg, var(--skeleton-base) 0%, var(--skeleton-highlight) 100%);
   position: relative;
   overflow: hidden;
 }
@@ -76,7 +76,7 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.05) 50%,
+    var(--skeleton-shimmer) 50%,
     transparent 100%
   );
   animation: shimmer 1.5s infinite;
@@ -95,7 +95,7 @@
   width: 300px;
   max-width: 80%;
   height: 2.5rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--skeleton-text);
   border-radius: 4px;
 }
 
@@ -111,7 +111,7 @@
   width: 250px;
   max-width: 70%;
   height: 1.25rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--skeleton-text-subtle);
   border-radius: 4px;
 }
 

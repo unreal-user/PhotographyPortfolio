@@ -61,7 +61,7 @@ const UserMenu: React.FC = () => {
           <div className="user-menu-divider" />
 
           <nav className="user-menu-nav">
-            <Link to="/admin" className="user-menu-item">
+            <Link to="/admin" className="user-menu-item" onClick={() => setIsOpen(false)}>
               Dashboard
             </Link>
 

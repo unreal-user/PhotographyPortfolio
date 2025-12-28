@@ -51,6 +51,13 @@
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+  /* Skeleton Loading */
+  --skeleton-base: #e0e0e0;
+  --skeleton-highlight: #f5f5f5;
+  --skeleton-shimmer: rgba(255, 255, 255, 0.4);
+  --skeleton-text: rgba(0, 0, 0, 0.1);
+  --skeleton-text-subtle: rgba(0, 0, 0, 0.08);
 }
 
 /* Dark Theme */
@@ -67,5 +74,12 @@
     --header-bg-scrolled: rgba(28, 25, 23, 0.55);
     --header-text: #fafaf9;
     --header-shadow: rgba(0, 0, 0, 0.3);
+
+    /* Skeleton Loading - Dark Theme */
+    --skeleton-base: #1a1a1a;
+    --skeleton-highlight: #2d2d2d;
+    --skeleton-shimmer: rgba(255, 255, 255, 0.05);
+    --skeleton-text: rgba(255, 255, 255, 0.1);
+    --skeleton-text-subtle: rgba(255, 255, 255, 0.08);
   }
 }

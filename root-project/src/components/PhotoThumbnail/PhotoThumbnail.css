@@ -2,7 +2,7 @@
   position: relative;
   cursor: pointer;
   overflow: hidden;
-  background-color: #f0f0f0;
+  background-color: var(--skeleton-base);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -21,7 +21,7 @@
 .photo-thumbnail-skeleton {
   position: relative;
   aspect-ratio: 1 / 1;
-  background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%);
+  background: linear-gradient(135deg, var(--skeleton-base) 0%, var(--skeleton-highlight) 100%);
   overflow: hidden;
 }
 
@@ -32,7 +32,7 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.4) 50%,
+    var(--skeleton-shimmer) 50%,
     transparent 100%
   );
   animation: thumbnail-shimmer 1.5s infinite;
