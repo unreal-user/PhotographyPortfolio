@@ -5,6 +5,7 @@ import { Hero } from '../components/Hero/Hero';
 import { MasonryGallery } from '../components/MasonryGallery/MasonryGallery';
 import { PhotoThumbnail } from '../components/PhotoThumbnail/PhotoThumbnail';
 import { PhotoModal } from '../components/PhotoModal/PhotoModal';
+import '../components/PhotoThumbnail/PhotoThumbnail.css';
 
 const HomePage = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -63,9 +64,11 @@ const HomePage = () => {
       />
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-secondary)' }}>
-          Loading photos...
-        </div>
+        <MasonryGallery columns={3} gap="16px">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="photo-thumbnail-skeleton" />
+          ))}
+        </MasonryGallery>
       ) : photos.length > 0 ? (
         <MasonryGallery columns={3} gap="16px">
           {photos.map((photo) => (
