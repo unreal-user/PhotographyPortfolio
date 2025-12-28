@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "upload": "aws s3 sync dist/ s3://photography-project-website/ --delete",
-    "clear-cache": "aws cloudfront create-invalidation --distribution-id E3K5LWEXRBK0GF --paths \"/*\""
+    "clear-cache": "aws cloudfront create-invalidation --distribution-id E3K5LWEXRBK0GF --paths \"/*\"",
+    "yeet": "npm run build && npm run upload && npm run clear-cache"
   },
   "dependencies": {
     "aws-amplify": "^6.11.4",
