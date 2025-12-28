@@ -18,6 +18,7 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
     heroPhotoId: '',
     title: '',
     subtitle: '',
+    galleryColumns: 3,
   });
   const [publishedPhotos, setPublishedPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +45,7 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
         heroPhotoId: settings.heroPhotoId || '',
         title: settings.title,
         subtitle: settings.subtitle,
+        galleryColumns: settings.galleryColumns || 3,
       });
       setPublishedPhotos(photosResponse.photos);
     } catch (err) {
@@ -62,9 +64,12 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
     return null;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'galleryColumns' ? parseInt(value, 10) : value
+    }));
   };
 
   const handlePhotoSelect = (photoId: string) => {
@@ -86,6 +91,7 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
         heroPhotoId: formData.heroPhotoId || undefined,
         title: formData.title,
         subtitle: formData.subtitle,
+        galleryColumns: formData.galleryColumns,
       });
 
       onSettingsUpdated();
@@ -165,6 +171,30 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
                   placeholder="Capturing life's moments"
                   disabled={isSaving}
                 />
+              </div>
+
+              {/* Gallery Columns */}
+              <div className="hero-settings-form-group">
+                <label htmlFor="gallery-columns" className="hero-settings-label">
+                  Gallery Columns
+                </label>
+                <p className="hero-settings-hint">
+                  Number of columns in the photo gallery
+                </p>
+                <select
+                  id="gallery-columns"
+                  name="galleryColumns"
+                  value={formData.galleryColumns}
+                  onChange={handleInputChange}
+                  className="hero-settings-input"
+                  disabled={isSaving}
+                >
+                  <option value={2}>2 Columns</option>
+                  <option value={3}>3 Columns (Default)</option>
+                  <option value={4}>4 Columns</option>
+                  <option value={5}>5 Columns</option>
+                  <option value={6}>6 Columns</option>
+                </select>
               </div>
 
               {/* Photo Selection */}

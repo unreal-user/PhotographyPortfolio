@@ -13,6 +13,7 @@ const defaultHeroSettings: HeroSettings = {
   title: 'Photography Portfolio',
   subtitle: 'Capturing life one frame at a time',
   heroImageUrl: null,
+  galleryColumns: 3,
 };
 
 const HomePage = () => {
@@ -33,6 +34,7 @@ const HomePage = () => {
   const isLoading = heroLoading || photosLoading;
   const photos = photosData?.photos ?? [];
   const settings = heroSettings ?? defaultHeroSettings;
+  const galleryColumns = settings.galleryColumns ?? 3;
 
   const handleThumbnailClick = (photo: Photo) => {
     setSelectedPhoto(photo);
@@ -58,13 +60,13 @@ const HomePage = () => {
       />
 
       {isLoading ? (
-        <MasonryGallery columns={3} gap="16px">
-          {[1, 2, 3].map((i) => (
+        <MasonryGallery columns={galleryColumns} gap="16px">
+          {Array.from({ length: galleryColumns }, (_, i) => (
             <div key={i} className="photo-thumbnail-skeleton" />
           ))}
         </MasonryGallery>
       ) : photos.length > 0 ? (
-        <MasonryGallery columns={3} gap="16px">
+        <MasonryGallery columns={galleryColumns} gap="16px">
           {photos.map((photo) => (
             <PhotoThumbnail
               key={photo.photoId}

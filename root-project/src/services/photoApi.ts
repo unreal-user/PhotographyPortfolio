@@ -255,6 +255,7 @@ export interface HeroSettings {
   heroImageUrl?: string | null;
   title: string;
   subtitle: string;
+  galleryColumns?: number;
   updatedAt?: string;
 }
 
@@ -262,6 +263,7 @@ export interface UpdateHeroSettingsRequest {
   heroPhotoId?: string;
   title: string;
   subtitle: string;
+  galleryColumns?: number;
 }
 
 // ============================================================================
