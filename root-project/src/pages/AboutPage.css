@@ -1,5 +1,12 @@
 /* About Page Styles */
 
+.about-loading {
+  text-align: center;
+  padding: var(--space-2xl);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+}
+
 .about-container {
   max-width: var(--max-width);
   margin: 0 auto;

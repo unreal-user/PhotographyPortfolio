@@ -16,16 +16,26 @@ class DecimalEncoder(json.JSONEncoder):
 
 def lambda_handler(event, context):
     """
-    Soft delete photo (move to archive/).
+    Delete photo - soft delete (move to archive/) or permanent delete.
+
+    - If photo is not archived: soft delete (copy to archive/)
+    - If photo is already archived: permanent delete (remove from S3 and DynamoDB)
 
     Path Parameters:
     - photoId: UUID v4
 
-    Output:
+    Output (soft delete):
     {
         "photoId": "...",
         "status": "archived",
         "archivedAt": "2025-12-19T10:45:00Z"
+    }
+
+    Output (permanent delete):
+    {
+        "photoId": "...",
+        "status": "deleted",
+        "deletedAt": "2025-12-19T10:45:00Z"
     }
     """
     try:
@@ -40,10 +50,29 @@ def lambda_handler(event, context):
             return error_response(404, 'Photo not found', 'NotFoundError')
 
         current_item = response['Item']
+        current_status = current_item.get('status', '')
         source_key = current_item['originalKey']
-
-        # Copy from current location to archive/
         bucket = os.environ['PHOTOS_BUCKET_NAME']
+        now = datetime.utcnow().isoformat() + 'Z'
+
+        # If already archived, permanently delete
+        if current_status == 'archived':
+            # Delete from S3
+            s3_client.delete_object(
+                Bucket=bucket,
+                Key=source_key
+            )
+
+            # Delete from DynamoDB
+            table.delete_item(Key={'photoId': photo_id})
+
+            return success_response({
+                'photoId': photo_id,
+                'status': 'deleted',
+                'deletedAt': now
+            })
+
+        # Otherwise, soft delete (move to archive/)
         ext = source_key.split('.')[-1]
         dest_key = f"archive/{photo_id}.{ext}"
 
@@ -54,7 +83,6 @@ def lambda_handler(event, context):
         )
 
         # Update status to archived
-        now = datetime.utcnow().isoformat() + 'Z'
         now_decimal = json.loads(json.dumps(now), parse_float=Decimal)
 
         table.update_item(

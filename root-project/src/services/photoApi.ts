@@ -244,3 +244,126 @@ export const photoApi = {
     return response.json();
   },
 };
+
+// ============================================================================
+// Site Settings Types
+// ============================================================================
+
+export interface HeroSettings {
+  settingId: 'hero';
+  heroPhotoId?: string | null;
+  heroImageUrl?: string | null;
+  title: string;
+  subtitle: string;
+  updatedAt?: string;
+}
+
+export interface UpdateHeroSettingsRequest {
+  heroPhotoId?: string;
+  title: string;
+  subtitle: string;
+}
+
+// ============================================================================
+// Settings API Client
+// ============================================================================
+
+export const settingsApi = {
+  /**
+   * Get hero settings (public endpoint)
+   */
+  async getHeroSettings(): Promise<HeroSettings> {
+    const response = await fetch(`${API_BASE_URL}/settings/hero`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to load hero settings' }));
+      throw new Error(error.error || 'Failed to load hero settings');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Update hero settings (protected endpoint - requires authentication)
+   */
+  async updateHeroSettings(settings: UpdateHeroSettingsRequest): Promise<{ settingId: string; updatedAt: string; message: string }> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/settings/hero`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(settings),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to update settings' }));
+      throw new Error(error.error || 'Failed to update settings');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Get about page settings (public endpoint)
+   */
+  async getAboutSettings(): Promise<AboutSettings> {
+    const response = await fetch(`${API_BASE_URL}/settings/about`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to load about settings' }));
+      throw new Error(error.error || 'Failed to load about settings');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Update about page settings (protected endpoint - requires authentication)
+   */
+  async updateAboutSettings(settings: UpdateAboutSettingsRequest): Promise<{ settingId: string; updatedAt: string; message: string }> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/settings/about`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(settings),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to update settings' }));
+      throw new Error(error.error || 'Failed to update settings');
+    }
+
+    return response.json();
+  },
+};
+
+// ============================================================================
+// About Settings Types
+// ============================================================================
+
+export interface AboutSection {
+  heading: string;
+  body: string; // Double newlines separate paragraphs
+}
+
+export interface AboutSettings {
+  settingId: 'about';
+  heroPhotoId?: string | null;
+  heroImageUrl?: string | null;
+  title: string;
+  subtitle: string;
+  sections: AboutSection[];
+  updatedAt?: string;
+}
+
+export interface UpdateAboutSettingsRequest {
+  heroPhotoId?: string;
+  title: string;
+  subtitle: string;
+  sections: AboutSection[];
+}

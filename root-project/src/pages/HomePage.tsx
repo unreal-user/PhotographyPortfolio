@@ -1,27 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import type { Photo } from '../interfaces/Photo';
-import { photoApi } from '../services/photoApi';
+import { photoApi, settingsApi, type HeroSettings } from '../services/photoApi';
 import { Hero } from '../components/Hero/Hero';
 import { MasonryGallery } from '../components/MasonryGallery/MasonryGallery';
 import { PhotoThumbnail } from '../components/PhotoThumbnail/PhotoThumbnail';
 import { PhotoModal } from '../components/PhotoModal/PhotoModal';
 
+const DEFAULT_HERO_IMAGE = 'https://images.unsplash.com/photo-1756142754696-2bc410d5b248?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
+
 const HomePage = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [heroSettings, setHeroSettings] = useState<HeroSettings>({
+    settingId: 'hero',
+    title: 'Photography Portfolio',
+    subtitle: 'Capturing life one frame at a time',
+    heroImageUrl: null,
+  });
 
   useEffect(() => {
-    loadPhotos();
+    loadPageData();
   }, []);
 
-  const loadPhotos = async () => {
+  const loadPageData = async () => {
     try {
-      // Fetch published photos (limit to 12 for home page)
-      const response = await photoApi.listPhotos('published', 12);
-      setPhotos(response.photos);
+      // Fetch hero settings and photos in parallel
+      const [settings, photosResponse] = await Promise.all([
+        settingsApi.getHeroSettings().catch(() => heroSettings), // Use defaults on error
+        photoApi.listPhotos('published', 12),
+      ]);
+
+      setHeroSettings(settings);
+      setPhotos(photosResponse.photos);
     } catch (error) {
-      console.error('Error loading photos:', error);
+      console.error('Error loading page data:', error);
       // Silently fail - just show empty state
     } finally {
       setIsLoading(false);
@@ -45,9 +58,9 @@ const HomePage = () => {
   return (
     <>
       <Hero
-        imageUrl="https://images.unsplash.com/photo-1756142754696-2bc410d5b248?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-        title="Welcome - Title"
-        subtitle="Subtitle"
+        imageUrl={heroSettings.heroImageUrl || DEFAULT_HERO_IMAGE}
+        title={heroSettings.title}
+        subtitle={heroSettings.subtitle}
       />
 
       {isLoading ? (

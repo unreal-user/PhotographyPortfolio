@@ -366,9 +366,9 @@ resource "aws_cognito_user_pool_client" "web_client" {
   ]
 
   # Token validity
-  id_token_validity      = 60  # 1 hour
-  access_token_validity  = 60  # 1 hour
-  refresh_token_validity = 30  # 30 days
+  id_token_validity      = 60 # 1 hour
+  access_token_validity  = 60 # 1 hour
+  refresh_token_validity = 30 # 30 days
 
   token_validity_units {
     id_token      = "minutes"
@@ -377,9 +377,9 @@ resource "aws_cognito_user_pool_client" "web_client" {
   }
 
   # Security settings
-  generate_secret                      = false # Public client (SPA)
-  prevent_user_existence_errors        = "ENABLED"
-  enable_token_revocation              = true
+  generate_secret                               = false # Public client (SPA)
+  prevent_user_existence_errors                 = "ENABLED"
+  enable_token_revocation                       = true
   enable_propagate_additional_user_context_data = false
 
   # OAuth flows (disabled for now, not using hosted UI)
@@ -866,6 +866,15 @@ resource "aws_iam_policy" "lambda_s3_copy_policy" {
           "${aws_s3_bucket.photos.arn}/originals/*",
           "${aws_s3_bucket.photos.arn}/archive/*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:DeleteObject"
+        ]
+        Resource = [
+          "${aws_s3_bucket.photos.arn}/archive/*"
+        ]
       }
     ]
   })
@@ -898,6 +907,7 @@ resource "aws_iam_policy" "lambda_dynamodb_policy" {
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
           "dynamodb:Query"
         ]
         Resource = [
@@ -1015,8 +1025,8 @@ resource "aws_lambda_function" "generate_upload_url" {
 
   environment {
     variables = {
-      PHOTOS_BUCKET_NAME  = aws_s3_bucket.photos.id
-      UPLOAD_EXPIRATION   = "300"
+      PHOTOS_BUCKET_NAME = aws_s3_bucket.photos.id
+      UPLOAD_EXPIRATION  = "300"
     }
   }
 
@@ -1236,7 +1246,7 @@ resource "aws_lambda_function" "bulk_update_photos" {
   role          = aws_iam_role.lambda_execution_role.arn
   handler       = "index.lambda_handler"
   runtime       = "python3.12"
-  timeout       = 60  # Longer timeout for batch operations
+  timeout       = 60 # Longer timeout for batch operations
   memory_size   = 256
 
   source_code_hash = filebase64sha256("${path.module}/bulk_update_photos.zip")
@@ -1440,7 +1450,7 @@ resource "aws_api_gateway_method" "contact_post" {
   rest_api_id   = aws_api_gateway_rest_api.photos_api.id
   resource_id   = aws_api_gateway_resource.contact.id
   http_method   = "POST"
-  authorization = "NONE"  # Public endpoint
+  authorization = "NONE" # Public endpoint
 }
 
 resource "aws_api_gateway_integration" "contact_post" {
@@ -1513,7 +1523,7 @@ resource "aws_api_gateway_method" "bulk_update_post" {
   rest_api_id   = aws_api_gateway_rest_api.photos_api.id
   resource_id   = aws_api_gateway_resource.photos_bulk.id
   http_method   = "POST"
-  authorization = "COGNITO_USER_POOLS"  # Require authentication
+  authorization = "COGNITO_USER_POOLS" # Require authentication
   authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
 }
 
@@ -1798,10 +1808,14 @@ resource "aws_api_gateway_deployment" "photos_api_deployment" {
       aws_api_gateway_method.get_photo_get.id,
       aws_api_gateway_method.contact_post.id,
       aws_api_gateway_method.bulk_update_post.id,
+      aws_api_gateway_method.get_setting.id,
+      aws_api_gateway_method.update_setting.id,
       aws_api_gateway_method.list_photos_get.authorization,
       aws_api_gateway_method.get_photo_get.authorization,
       aws_api_gateway_method.contact_post.authorization,
       aws_api_gateway_method.bulk_update_post.authorization,
+      aws_api_gateway_method.get_setting.authorization,
+      aws_api_gateway_method.update_setting.authorization,
     ]))
   }
 
@@ -1814,9 +1828,12 @@ resource "aws_api_gateway_deployment" "photos_api_deployment" {
     aws_api_gateway_integration.delete_photo_integration,
     aws_api_gateway_integration.contact_post,
     aws_api_gateway_integration.bulk_update_post,
+    aws_api_gateway_integration.get_setting_integration,
+    aws_api_gateway_integration.update_setting_integration,
     aws_api_gateway_integration_response.upload_url_options_integration_response,
     aws_api_gateway_integration_response.photos_options_integration_response,
-    aws_api_gateway_integration_response.photo_by_id_options_integration_response
+    aws_api_gateway_integration_response.photo_by_id_options_integration_response,
+    aws_api_gateway_integration_response.setting_by_id_options_integration_response
   ]
 
   lifecycle {
@@ -1847,4 +1864,243 @@ resource "aws_api_gateway_method_settings" "photos_api_throttle" {
     throttling_rate_limit  = 100 # Sustained requests per second
     throttling_burst_limit = 200 # Max requests in a burst
   }
+}
+
+# ==============================================================================
+# SITE SETTINGS - DynamoDB Table and API
+# ==============================================================================
+
+# DynamoDB table for site settings (hero, about, etc.)
+resource "aws_dynamodb_table" "site_settings" {
+  name         = "${var.project_name}-site-settings"
+  billing_mode = "PAY_PER_REQUEST"
+
+  hash_key = "settingId"
+
+  attribute {
+    name = "settingId"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  tags = {
+    Name        = "${var.project_name}-site-settings"
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
+# IAM policy for Lambda to access site settings
+resource "aws_iam_policy" "lambda_site_settings_policy" {
+  name        = "${var.project_name}-lambda-site-settings-policy"
+  description = "Allow Lambda to read/write site settings"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem"
+        ]
+        Resource = aws_dynamodb_table.site_settings.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_site_settings" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = aws_iam_policy.lambda_site_settings_policy.arn
+}
+
+# CloudWatch Log Groups for site settings Lambdas
+resource "aws_cloudwatch_log_group" "get_site_settings_logs" {
+  name              = "/aws/lambda/${var.project_name}-get-site-settings"
+  retention_in_days = 14
+}
+
+resource "aws_cloudwatch_log_group" "update_site_settings_logs" {
+  name              = "/aws/lambda/${var.project_name}-update-site-settings"
+  retention_in_days = 14
+}
+
+# Get Site Settings Lambda
+resource "aws_lambda_function" "get_site_settings" {
+  filename      = "${path.module}/get_site_settings.zip"
+  function_name = "${var.project_name}-get-site-settings"
+  role          = aws_iam_role.lambda_execution_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.12"
+  timeout       = 10
+  memory_size   = 128
+
+  source_code_hash = filebase64sha256("${path.module}/get_site_settings.zip")
+
+  environment {
+    variables = {
+      SITE_SETTINGS_TABLE_NAME = aws_dynamodb_table.site_settings.name
+      PHOTOS_TABLE_NAME        = aws_dynamodb_table.photos.name
+      CLOUDFRONT_DOMAIN_NAME   = aws_cloudfront_distribution.photos.domain_name
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.get_site_settings_logs,
+    aws_iam_role_policy_attachment.lambda_basic_execution,
+    aws_iam_role_policy_attachment.lambda_site_settings,
+    aws_iam_role_policy_attachment.lambda_dynamodb
+  ]
+}
+
+# Update Site Settings Lambda
+resource "aws_lambda_function" "update_site_settings" {
+  filename      = "${path.module}/update_site_settings.zip"
+  function_name = "${var.project_name}-update-site-settings"
+  role          = aws_iam_role.lambda_execution_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.12"
+  timeout       = 10
+  memory_size   = 128
+
+  source_code_hash = filebase64sha256("${path.module}/update_site_settings.zip")
+
+  environment {
+    variables = {
+      SITE_SETTINGS_TABLE_NAME = aws_dynamodb_table.site_settings.name
+      PHOTOS_TABLE_NAME        = aws_dynamodb_table.photos.name
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.update_site_settings_logs,
+    aws_iam_role_policy_attachment.lambda_basic_execution,
+    aws_iam_role_policy_attachment.lambda_site_settings,
+    aws_iam_role_policy_attachment.lambda_dynamodb
+  ]
+}
+
+# API Gateway: /settings resource
+resource "aws_api_gateway_resource" "settings" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  parent_id   = aws_api_gateway_rest_api.photos_api.root_resource_id
+  path_part   = "settings"
+}
+
+# API Gateway: /settings/{settingId} resource
+resource "aws_api_gateway_resource" "setting_by_id" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  parent_id   = aws_api_gateway_resource.settings.id
+  path_part   = "{settingId}"
+}
+
+# GET /settings/{settingId} - Public endpoint
+resource "aws_api_gateway_method" "get_setting" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.setting_by_id.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "get_setting_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.photos_api.id
+  resource_id             = aws_api_gateway_resource.setting_by_id.id
+  http_method             = aws_api_gateway_method.get_setting.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.get_site_settings.invoke_arn
+}
+
+# PATCH /settings/{settingId} - Protected endpoint
+resource "aws_api_gateway_method" "update_setting" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.setting_by_id.id
+  http_method   = "PATCH"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+}
+
+resource "aws_api_gateway_integration" "update_setting_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.photos_api.id
+  resource_id             = aws_api_gateway_resource.setting_by_id.id
+  http_method             = aws_api_gateway_method.update_setting.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.update_site_settings.invoke_arn
+}
+
+# OPTIONS /settings/{settingId} - CORS preflight
+resource "aws_api_gateway_method" "setting_by_id_options" {
+  rest_api_id   = aws_api_gateway_rest_api.photos_api.id
+  resource_id   = aws_api_gateway_resource.setting_by_id.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "setting_by_id_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.setting_by_id.id
+  http_method = aws_api_gateway_method.setting_by_id_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "setting_by_id_options_response" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.setting_by_id.id
+  http_method = aws_api_gateway_method.setting_by_id_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration_response" "setting_by_id_options_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.photos_api.id
+  resource_id = aws_api_gateway_resource.setting_by_id.id
+  http_method = aws_api_gateway_method.setting_by_id_options.http_method
+  status_code = aws_api_gateway_method_response.setting_by_id_options_response.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,PATCH,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
+# Lambda permissions for API Gateway
+resource "aws_lambda_permission" "api_gateway_get_site_settings" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.get_site_settings.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "api_gateway_update_site_settings" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.update_site_settings.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.photos_api.execution_arn}/*/*"
 }
