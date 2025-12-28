@@ -62,3 +62,62 @@
     font-size: 1.75rem;
   }
 }
+
+/* Skeleton Loading State */
+.hero-skeleton {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-skeleton-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.hero-title-skeleton {
+  width: 300px;
+  max-width: 80%;
+  height: 2.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+@media (min-width: 768px) {
+  .hero-title-skeleton {
+    width: 400px;
+    height: 4rem;
+  }
+}
+
+.hero-subtitle-skeleton {
+  margin-top: 1rem;
+  width: 250px;
+  max-width: 70%;
+  height: 1.25rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+@media (min-width: 768px) {
+  .hero-subtitle-skeleton {
+    width: 350px;
+    height: 1.75rem;
+  }
+}

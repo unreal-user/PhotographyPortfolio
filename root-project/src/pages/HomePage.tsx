@@ -6,8 +6,6 @@ import { MasonryGallery } from '../components/MasonryGallery/MasonryGallery';
 import { PhotoThumbnail } from '../components/PhotoThumbnail/PhotoThumbnail';
 import { PhotoModal } from '../components/PhotoModal/PhotoModal';
 
-const DEFAULT_HERO_IMAGE = 'https://images.unsplash.com/photo-1756142754696-2bc410d5b248?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
-
 const HomePage = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,9 +56,10 @@ const HomePage = () => {
   return (
     <>
       <Hero
-        imageUrl={heroSettings.heroImageUrl || DEFAULT_HERO_IMAGE}
+        imageUrl={heroSettings.heroImageUrl || undefined}
         title={heroSettings.title}
         subtitle={heroSettings.subtitle}
+        isLoading={isLoading}
       />
 
       {isLoading ? (
