@@ -37,9 +37,9 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
 
   // Handle card click for selection (Phase 6d)
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't toggle selection if clicking on a button or the image wrapper
+    // Don't toggle selection if clicking on a button
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('.photo-card-image-wrapper')) {
+    if (target.closest('button')) {
       return;
     }
     onSelect?.(photo.photoId);
@@ -62,7 +62,7 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
         </div>
       )}
 
-      <div className="photo-card-image-wrapper" onClick={onView}>
+      <div className="photo-card-image-wrapper">
         <img
           src={imageUrl}
           alt={photo.alt}
