@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import useSWR from 'swr';
 import { Hero } from '../components/Hero/Hero';
 import { settingsApi } from '../services/photoApi';
-import type { AboutSettings } from '../services/photoApi';
 import './AboutPage.css';
 
 /**
@@ -15,24 +15,11 @@ const parseParagraphs = (body: string): string[] => {
 };
 
 const AboutPage: React.FC = () => {
-  const [settings, setSettings] = useState<AboutSettings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const aboutSettings = await settingsApi.getAboutSettings();
-        setSettings(aboutSettings);
-      } catch (err) {
-        console.error('Failed to load about settings:', err);
-        // Use defaults on error
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadSettings();
-  }, []);
+  // Fetch about settings with SWR
+  const { data: settings, isLoading } = useSWR(
+    'aboutSettings',
+    () => settingsApi.getAboutSettings()
+  );
 
   const heroImageUrl = settings?.heroImageUrl || undefined;
   const title = settings?.title || 'About Me';

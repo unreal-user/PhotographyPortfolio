@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import useSWR from 'swr';
 import type { Photo } from '../interfaces/Photo';
 import { photoApi, settingsApi, type HeroSettings } from '../services/photoApi';
 import { Hero } from '../components/Hero/Hero';
@@ -7,38 +8,31 @@ import { PhotoThumbnail } from '../components/PhotoThumbnail/PhotoThumbnail';
 import { PhotoModal } from '../components/PhotoModal/PhotoModal';
 import '../components/PhotoThumbnail/PhotoThumbnail.css';
 
+const defaultHeroSettings: HeroSettings = {
+  settingId: 'hero',
+  title: 'Photography Portfolio',
+  subtitle: 'Capturing life one frame at a time',
+  heroImageUrl: null,
+};
+
 const HomePage = () => {
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
-  const [heroSettings, setHeroSettings] = useState<HeroSettings>({
-    settingId: 'hero',
-    title: 'Photography Portfolio',
-    subtitle: 'Capturing life one frame at a time',
-    heroImageUrl: null,
-  });
 
-  useEffect(() => {
-    loadPageData();
-  }, []);
+  // Fetch hero settings with SWR
+  const { data: heroSettings, isLoading: heroLoading } = useSWR(
+    'heroSettings',
+    () => settingsApi.getHeroSettings().catch(() => defaultHeroSettings)
+  );
 
-  const loadPageData = async () => {
-    try {
-      // Fetch hero settings and photos in parallel
-      const [settings, photosResponse] = await Promise.all([
-        settingsApi.getHeroSettings().catch(() => heroSettings), // Use defaults on error
-        photoApi.listPhotos('published', 12),
-      ]);
+  // Fetch photos with SWR
+  const { data: photosData, isLoading: photosLoading } = useSWR(
+    'homePhotos',
+    () => photoApi.listPhotos('published', 12)
+  );
 
-      setHeroSettings(settings);
-      setPhotos(photosResponse.photos);
-    } catch (error) {
-      console.error('Error loading page data:', error);
-      // Silently fail - just show empty state
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const isLoading = heroLoading || photosLoading;
+  const photos = photosData?.photos ?? [];
+  const settings = heroSettings ?? defaultHeroSettings;
 
   const handleThumbnailClick = (photo: Photo) => {
     setSelectedPhoto(photo);
@@ -57,9 +51,9 @@ const HomePage = () => {
   return (
     <>
       <Hero
-        imageUrl={heroSettings.heroImageUrl || undefined}
-        title={heroSettings.title}
-        subtitle={heroSettings.subtitle}
+        imageUrl={settings.heroImageUrl || undefined}
+        title={settings.title}
+        subtitle={settings.subtitle}
         isLoading={isLoading}
       />
 
