@@ -4,9 +4,6 @@ import { settingsApi } from '../services/photoApi';
 import type { AboutSettings } from '../services/photoApi';
 import './AboutPage.css';
 
-const DEFAULT_HERO_IMAGE =
-  'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?q=80&w=1974&auto=format&fit=crop';
-
 /**
  * Parse body text into paragraphs by splitting on double newlines
  */
@@ -37,14 +34,19 @@ const AboutPage: React.FC = () => {
     loadSettings();
   }, []);
 
-  const heroImageUrl = settings?.heroImageUrl || DEFAULT_HERO_IMAGE;
+  const heroImageUrl = settings?.heroImageUrl || undefined;
   const title = settings?.title || 'About Me';
   const subtitle = settings?.subtitle || 'Telling stories through the lens';
   const sections = settings?.sections || [];
 
   return (
     <>
-      <Hero imageUrl={heroImageUrl} title={title} subtitle={subtitle} />
+      <Hero
+        imageUrl={heroImageUrl}
+        title={title}
+        subtitle={subtitle}
+        isLoading={isLoading}
+      />
 
       <div className="about-container">
         {isLoading ? (
