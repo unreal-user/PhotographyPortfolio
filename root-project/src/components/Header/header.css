@@ -28,6 +28,10 @@
   gap: var(--space-md, 1rem);
 }
 
+.header-container.nav-centered {
+  justify-content: center;
+}
+
 /* Desktop Navigation */
 .desktop-nav {
   display: none;

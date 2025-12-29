@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import useSWR from 'swr';
 import { Hero } from '../components/Hero/Hero';
 import { settingsApi } from '../services/photoApi';
-import type { AboutSettings } from '../services/photoApi';
 import './AboutPage.css';
-
-const DEFAULT_HERO_IMAGE =
-  'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?q=80&w=1974&auto=format&fit=crop';
 
 /**
  * Parse body text into paragraphs by splitting on double newlines
@@ -18,33 +15,25 @@ const parseParagraphs = (body: string): string[] => {
 };
 
 const AboutPage: React.FC = () => {
-  const [settings, setSettings] = useState<AboutSettings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Fetch about settings with SWR
+  const { data: settings, isLoading } = useSWR(
+    'aboutSettings',
+    () => settingsApi.getAboutSettings()
+  );
 
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const aboutSettings = await settingsApi.getAboutSettings();
-        setSettings(aboutSettings);
-      } catch (err) {
-        console.error('Failed to load about settings:', err);
-        // Use defaults on error
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadSettings();
-  }, []);
-
-  const heroImageUrl = settings?.heroImageUrl || DEFAULT_HERO_IMAGE;
+  const heroImageUrl = settings?.heroImageUrl || undefined;
   const title = settings?.title || 'About Me';
   const subtitle = settings?.subtitle || 'Telling stories through the lens';
   const sections = settings?.sections || [];
 
   return (
     <>
-      <Hero imageUrl={heroImageUrl} title={title} subtitle={subtitle} />
+      <Hero
+        imageUrl={heroImageUrl}
+        title={title}
+        subtitle={subtitle}
+        isLoading={isLoading}
+      />
 
       <div className="about-container">
         {isLoading ? (

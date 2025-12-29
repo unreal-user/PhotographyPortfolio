@@ -1,45 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import useSWR from 'swr';
 import type { Photo } from '../interfaces/Photo';
 import { photoApi, settingsApi, type HeroSettings } from '../services/photoApi';
 import { Hero } from '../components/Hero/Hero';
 import { MasonryGallery } from '../components/MasonryGallery/MasonryGallery';
 import { PhotoThumbnail } from '../components/PhotoThumbnail/PhotoThumbnail';
 import { PhotoModal } from '../components/PhotoModal/PhotoModal';
+import '../components/PhotoThumbnail/PhotoThumbnail.css';
 
-const DEFAULT_HERO_IMAGE = 'https://images.unsplash.com/photo-1756142754696-2bc410d5b248?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
+const defaultHeroSettings: HeroSettings = {
+  settingId: 'hero',
+  title: 'Photography Portfolio',
+  subtitle: 'Capturing life one frame at a time',
+  heroImageUrl: null,
+  galleryColumns: 3,
+};
 
 const HomePage = () => {
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
-  const [heroSettings, setHeroSettings] = useState<HeroSettings>({
-    settingId: 'hero',
-    title: 'Photography Portfolio',
-    subtitle: 'Capturing life one frame at a time',
-    heroImageUrl: null,
-  });
 
-  useEffect(() => {
-    loadPageData();
-  }, []);
+  // Fetch hero settings with SWR
+  const { data: heroSettings, isLoading: heroLoading } = useSWR(
+    'heroSettings',
+    () => settingsApi.getHeroSettings().catch(() => defaultHeroSettings)
+  );
 
-  const loadPageData = async () => {
-    try {
-      // Fetch hero settings and photos in parallel
-      const [settings, photosResponse] = await Promise.all([
-        settingsApi.getHeroSettings().catch(() => heroSettings), // Use defaults on error
-        photoApi.listPhotos('published', 12),
-      ]);
+  // Fetch photos with SWR
+  const { data: photosData, isLoading: photosLoading } = useSWR(
+    'homePhotos',
+    () => photoApi.listPhotos('published', 12)
+  );
 
-      setHeroSettings(settings);
-      setPhotos(photosResponse.photos);
-    } catch (error) {
-      console.error('Error loading page data:', error);
-      // Silently fail - just show empty state
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const isLoading = heroLoading || photosLoading;
+  const photos = photosData?.photos ?? [];
+  const settings = heroSettings ?? defaultHeroSettings;
+  const galleryColumns = settings.galleryColumns ?? 3;
 
   const handleThumbnailClick = (photo: Photo) => {
     setSelectedPhoto(photo);
@@ -58,17 +53,20 @@ const HomePage = () => {
   return (
     <>
       <Hero
-        imageUrl={heroSettings.heroImageUrl || DEFAULT_HERO_IMAGE}
-        title={heroSettings.title}
-        subtitle={heroSettings.subtitle}
+        imageUrl={settings.heroImageUrl || undefined}
+        title={settings.title}
+        subtitle={settings.subtitle}
+        isLoading={isLoading}
       />
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-secondary)' }}>
-          Loading photos...
-        </div>
+        <MasonryGallery columns={galleryColumns} gap="16px">
+          {Array.from({ length: galleryColumns }, (_, i) => (
+            <div key={i} className="photo-thumbnail-skeleton" />
+          ))}
+        </MasonryGallery>
       ) : photos.length > 0 ? (
-        <MasonryGallery columns={3} gap="16px">
+        <MasonryGallery columns={galleryColumns} gap="16px">
           {photos.map((photo) => (
             <PhotoThumbnail
               key={photo.photoId}

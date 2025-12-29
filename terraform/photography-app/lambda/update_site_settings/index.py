@@ -77,6 +77,16 @@ def lambda_handler(event, context):
             if not body.get('subtitle'):
                 return error_response(400, 'Subtitle is required', 'ValidationError', allowed_origin)
 
+            # Validate galleryColumns if provided
+            if 'galleryColumns' in body:
+                try:
+                    columns = int(body.get('galleryColumns'))
+                    if columns < 1 or columns > 6:
+                        return error_response(400, 'Gallery columns must be between 1 and 6', 'ValidationError', allowed_origin)
+                    body['galleryColumns'] = columns  # Ensure it's stored as int
+                except (ValueError, TypeError):
+                    return error_response(400, 'Gallery columns must be a number', 'ValidationError', allowed_origin)
+
             # Validate photo exists and is published
             if hero_photo_id:
                 photos_table = dynamodb.Table(os.environ['PHOTOS_TABLE_NAME'])

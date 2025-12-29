@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../auth/useAuth';
 import UserMenu from '../UserMenu/UserMenu';
 import './header.css';
 
 const Header: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -29,7 +31,7 @@ const Header: React.FC = () => {
 
   return (
     <header className={`header ${isScrolled ? 'scrolled' : ''}`}>
-      <div className="header-container">
+      <div className={`header-container ${!isAuthenticated ? 'nav-centered' : ''}`}>
         {/* Desktop Navigation */}
         <nav className="header-nav desktop-nav">
           <ul className="nav-list">

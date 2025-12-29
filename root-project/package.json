@@ -9,14 +9,16 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "upload": "aws s3 sync dist/ s3://photography-project-website/ --delete",
-    "clear-cache": "aws cloudfront create-invalidation --distribution-id E3K5LWEXRBK0GF --paths \"/*\""
+    "clear-cache": "aws cloudfront create-invalidation --distribution-id E3K5LWEXRBK0GF --paths \"/*\"",
+    "yeet": "npm run build && npm run upload && npm run clear-cache"
   },
   "dependencies": {
     "aws-amplify": "^6.11.4",
     "js-cookie": "^3.0.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.10.1"
+    "react-router-dom": "^7.10.1",
+    "swr": "^2.2.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

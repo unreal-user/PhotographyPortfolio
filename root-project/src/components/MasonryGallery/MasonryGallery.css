@@ -2,17 +2,17 @@
   --masonry-columns: 3;
   --masonry-gap: 16px;
 
-  display: grid;
-  grid-template-columns: repeat(var(--masonry-columns), 1fr);
-  gap: var(--masonry-gap);
+  column-count: var(--masonry-columns);
+  column-gap: var(--masonry-gap);
   padding: var(--space-lg);
   max-width: var(--max-width);
   margin: 0 auto;
 }
 
-/* Each child item in masonry grid */
+/* Each child item in masonry gallery */
 .masonry-gallery > * {
-  /* Items will naturally flow with variable heights */
+  break-inside: avoid;
+  margin-bottom: var(--masonry-gap);
   display: block;
 }
 
