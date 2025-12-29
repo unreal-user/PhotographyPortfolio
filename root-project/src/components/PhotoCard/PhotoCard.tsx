@@ -15,7 +15,6 @@ interface PhotoCardProps {
 
 const PhotoCard: React.FC<PhotoCardProps> = ({
   photo,
-  onView,
   onEdit,
   onPublish,
   onArchive,
