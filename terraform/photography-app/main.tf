@@ -873,7 +873,11 @@ resource "aws_iam_policy" "lambda_s3_copy_policy" {
           "s3:DeleteObject"
         ]
         Resource = [
-          "${aws_s3_bucket.photos.arn}/archive/*"
+          "${aws_s3_bucket.photos.arn}/archive/*",
+          "${aws_s3_bucket.photos.arn}/uploads/*",
+          "${aws_s3_bucket.photos.arn}/originals/*",
+          "${aws_s3_bucket.photos.arn}/thumbnails/*",
+          "${aws_s3_bucket.photos.arn}/display/*"
         ]
       }
     ]
