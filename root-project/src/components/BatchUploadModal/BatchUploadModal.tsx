@@ -52,7 +52,7 @@ export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({ isOpen, onCl
     <div className="batch-upload-modal-backdrop" onClick={(e) => e.target === e.currentTarget && !isUploading && onClose()}>
       <div className="batch-upload-modal">
         <div className="batch-upload-header">
-          <h2>Batch Upload Photos</h2>
+          <h2>Upload Photos</h2>
           <button className="batch-upload-close" onClick={onClose} disabled={isUploading}>×</button>
         </div>
 

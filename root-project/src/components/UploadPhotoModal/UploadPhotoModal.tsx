@@ -43,11 +43,6 @@ const UploadPhotoModal: React.FC<UploadPhotoModalProps> = ({
       return 'Invalid file type. Please upload JPEG, PNG, or WebP images.';
     }
 
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      return 'File too large. Maximum size is 10MB.';
-    }
-
     return null;
   };
 
@@ -250,7 +245,7 @@ const UploadPhotoModal: React.FC<UploadPhotoModalProps> = ({
                 Drag and drop your photo here, or click to select
               </p>
               <p className="upload-dropzone-hint">
-                JPEG, PNG, or WebP • Max 10MB
+                JPEG, PNG, or WebP
               </p>
               <input
                 ref={fileInputRef}

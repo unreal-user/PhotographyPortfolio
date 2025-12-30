@@ -3,7 +3,6 @@ import type { Photo } from '../../interfaces/Photo';
 import { photoApi } from '../../services/photoApi';
 import PhotoCard from '../../components/PhotoCard/PhotoCard';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
-import UploadPhotoModal from '../../components/UploadPhotoModal/UploadPhotoModal';
 import EditPhotoModal from '../../components/EditPhotoModal/EditPhotoModal';
 import { BatchUploadModal } from '../../components/BatchUploadModal/BatchUploadModal';
 import HeroSettingsModal from '../../components/HeroSettingsModal/HeroSettingsModal';
@@ -27,7 +26,6 @@ const AdminDashboard: React.FC = () => {
   const [showAboutSettingsModal, setShowAboutSettingsModal] = useState(false);
 
   // Modal states
-  const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -231,10 +229,6 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleUploadClick = () => {
-    setShowUploadModal(true);
-  };
-
-  const handleBatchUploadClick = () => {
     setShowBatchUploadModal(true);
   };
 
@@ -267,10 +261,7 @@ const AdminDashboard: React.FC = () => {
                 Select All
               </button>
               <button type="button" className="admin-dashboard-upload-button" onClick={handleUploadClick}>
-                Upload Photo
-              </button>
-              <button type="button" className="admin-dashboard-upload-button" onClick={handleBatchUploadClick}>
-                Batch Upload
+                Upload Photos
               </button>
             </>
           )}
@@ -349,23 +340,13 @@ const AdminDashboard: React.FC = () => {
         <div className="admin-dashboard-empty">
           <p>No {activeTab} photos yet.</p>
           {activeTab === 'pending' && (
-            <>
-              <button
-                type="button"
-                className="admin-dashboard-upload-button"
-                onClick={handleUploadClick}
-              >
-                Upload Your First Photo
-              </button>
-              <button
-                type="button"
-                className="admin-dashboard-upload-button"
-                onClick={handleBatchUploadClick}
-                style={{ marginLeft: '1rem' }}
-              >
-                Batch Upload
-              </button>
-            </>
+            <button
+              type="button"
+              className="admin-dashboard-upload-button"
+              onClick={handleUploadClick}
+            >
+              Upload Photos
+            </button>
           )}
         </div>
       ) : (
@@ -399,12 +380,6 @@ const AdminDashboard: React.FC = () => {
         onConfirm={handleConfirmAction}
         onCancel={handleCancelAction}
         variant={confirmDialog.action === 'publish' ? 'info' : 'danger'}
-      />
-
-      <UploadPhotoModal
-        isOpen={showUploadModal}
-        onClose={() => setShowUploadModal(false)}
-        onPhotoUploaded={loadPhotos}
       />
 
       <EditPhotoModal
