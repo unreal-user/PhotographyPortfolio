@@ -180,6 +180,23 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedPhotoIds.size === 0) return;
+
+    if (!confirm(`Permanently delete ${selectedPhotoIds.size} photo(s)? This cannot be undone.`)) return;
+
+    try {
+      // Delete photos one by one
+      await Promise.all(
+        Array.from(selectedPhotoIds).map(photoId => photoApi.deletePhoto(photoId))
+      );
+      setSelectedPhotoIds(new Set());
+      loadPhotos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete photos');
+    }
+  };
+
   const handlePublish = (photo: Photo) => {
     setConfirmDialog({
       isOpen: true,
@@ -245,15 +262,23 @@ const AdminDashboard: React.FC = () => {
               <button type="button" className="btn-select-all" onClick={handleSelectAll}>
                 {selectedPhotoIds.size === photos.length ? 'Deselect All' : 'Select All'}
               </button>
-              <button type="button" className="btn-bulk-action" onClick={handleBulkPublish}>
-                Publish Selected
-              </button>
-              <button type="button" className="btn-bulk-action" onClick={handleBulkArchive}>
-                Archive Selected
-              </button>
-              <button type="button" className="btn-bulk-action" onClick={handleBulkAssignGallery}>
-                Assign Gallery
-              </button>
+              {activeTab === 'archived' ? (
+                <button type="button" className="btn-bulk-action btn-bulk-action--danger" onClick={handleBulkDelete}>
+                  Delete Selected
+                </button>
+              ) : (
+                <>
+                  <button type="button" className="btn-bulk-action" onClick={handleBulkPublish}>
+                    Publish Selected
+                  </button>
+                  <button type="button" className="btn-bulk-action" onClick={handleBulkArchive}>
+                    Archive Selected
+                  </button>
+                  <button type="button" className="btn-bulk-action" onClick={handleBulkAssignGallery}>
+                    Assign Gallery
+                  </button>
+                </>
+              )}
             </>
           ) : (
             <>

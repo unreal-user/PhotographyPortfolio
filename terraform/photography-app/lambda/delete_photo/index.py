@@ -55,13 +55,29 @@ def lambda_handler(event, context):
         bucket = os.environ['PHOTOS_BUCKET_NAME']
         now = datetime.utcnow().isoformat() + 'Z'
 
+        # Extract filename for thumbnail/display deletion
+        # For uploads/originals: uploads/file.jpg -> file.jpg
+        # For archive: archive/uuid.jpg -> uuid.jpg (but we need original filename)
+        # We'll use the basename for simplicity
+        filename = os.path.basename(source_key)
+        thumbnail_key = f"thumbnails/{filename}"
+        display_key = f"display/{filename}"
+
         # If already archived, permanently delete
         if current_status == 'archived':
-            # Delete from S3
-            s3_client.delete_object(
-                Bucket=bucket,
-                Key=source_key
-            )
+            # Delete original/archive from S3
+            s3_client.delete_object(Bucket=bucket, Key=source_key)
+
+            # Delete thumbnail and display versions (may not exist, ignore errors)
+            try:
+                s3_client.delete_object(Bucket=bucket, Key=thumbnail_key)
+            except Exception as e:
+                print(f"Warning: Could not delete thumbnail {thumbnail_key}: {str(e)}")
+
+            try:
+                s3_client.delete_object(Bucket=bucket, Key=display_key)
+            except Exception as e:
+                print(f"Warning: Could not delete display {display_key}: {str(e)}")
 
             # Delete from DynamoDB
             table.delete_item(Key={'photoId': photo_id})
@@ -76,11 +92,29 @@ def lambda_handler(event, context):
         ext = source_key.split('.')[-1]
         dest_key = f"archive/{photo_id}.{ext}"
 
+        # Copy original to archive
         s3_client.copy_object(
             Bucket=bucket,
             CopySource={'Bucket': bucket, 'Key': source_key},
             Key=dest_key
         )
+
+        # Delete original from uploads/originals
+        try:
+            s3_client.delete_object(Bucket=bucket, Key=source_key)
+        except Exception as e:
+            print(f"Warning: Could not delete original {source_key}: {str(e)}")
+
+        # Delete thumbnail and display versions (save space, can regenerate if restored)
+        try:
+            s3_client.delete_object(Bucket=bucket, Key=thumbnail_key)
+        except Exception as e:
+            print(f"Warning: Could not delete thumbnail {thumbnail_key}: {str(e)}")
+
+        try:
+            s3_client.delete_object(Bucket=bucket, Key=display_key)
+        except Exception as e:
+            print(f"Warning: Could not delete display {display_key}: {str(e)}")
 
         # Update status to archived
         now_decimal = json.loads(json.dumps(now), parse_float=Decimal)
