@@ -1,0 +1,42 @@
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+}
+
+.status-badge--pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge--published {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge--archived {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .status-badge--pending {
+    background-color: #78350f;
+    color: #fef3c7;
+  }
+
+  .status-badge--published {
+    background-color: #064e3b;
+    color: #d1fae5;
+  }
+
+  .status-badge--archived {
+    background-color: #374151;
+    color: #e5e7eb;
+  }
+}

@@ -1,0 +1,127 @@
+.hero {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+  max-height: 900px;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+.hero--contain {
+  background-size: contain;
+}
+
+@media (min-width: 768px) {
+  .hero {
+    height: 80vh;
+  }
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+/* Text from */
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 300;
+  color: white;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  letter-spacing: 1px;
+}
+
+@media (min-width: 768px) {
+  .hero-title {
+    font-size: 4rem;
+  }
+}
+
+.hero-subtitle {
+  margin-top: 1rem;
+  font-size: 1.25rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 700px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+@media (min-width: 768px) {
+  .hero-subtitle {
+    font-size: 1.75rem;
+  }
+}
+
+/* Skeleton Loading State */
+.hero-skeleton {
+  background: linear-gradient(135deg, var(--skeleton-base) 0%, var(--skeleton-highlight) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-skeleton-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--skeleton-shimmer) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.hero-title-skeleton {
+  width: 300px;
+  max-width: 80%;
+  height: 2.5rem;
+  background: var(--skeleton-text);
+  border-radius: 4px;
+}
+
+@media (min-width: 768px) {
+  .hero-title-skeleton {
+    width: 400px;
+    height: 4rem;
+  }
+}
+
+.hero-subtitle-skeleton {
+  margin-top: 1rem;
+  width: 250px;
+  max-width: 70%;
+  height: 1.25rem;
+  background: var(--skeleton-text-subtle);
+  border-radius: 4px;
+}
+
+@media (min-width: 768px) {
+  .hero-subtitle-skeleton {
+    width: 350px;
+    height: 1.75rem;
+  }
+}

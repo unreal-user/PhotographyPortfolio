@@ -1,0 +1,20 @@
+# Terraform Variables Configuration
+# Copy this file to terraform.tfvars and fill in your values
+# IMPORTANT: terraform.tfvars is in .gitignore - never commit it to git
+
+project_name = "photography-project"
+aws_region   = "us-east-1"
+domain_name  = "cindyashleyphotography.com"
+environment  = "prod"
+
+# SES Email Configuration
+# Sender: Email address that sends contact form notifications
+# Must match verified domain in SES (e.g., noreply@yourdomain.com)
+contact_form_sender_email = "noreply@cindyashleyphotography.com"
+
+# Recipients: List of email addresses that receive contact form submissions
+# These emails must be verified in SES (for sandbox mode)
+# Add admin emails here as needed
+contact_form_recipient_emails = [
+  "c.eitutis@gmail.com"
+]

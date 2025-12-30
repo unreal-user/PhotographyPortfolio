@@ -1,0 +1,48 @@
+.photo-thumbnail {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  background-color: var(--skeleton-base);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.photo-thumbnail:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.photo-thumbnail img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Skeleton Loading State */
+.photo-thumbnail-skeleton {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(135deg, var(--skeleton-base) 0%, var(--skeleton-highlight) 100%);
+  overflow: hidden;
+}
+
+.photo-thumbnail-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--skeleton-shimmer) 50%,
+    transparent 100%
+  );
+  animation: thumbnail-shimmer 1.5s infinite;
+}
+
+@keyframes thumbnail-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
