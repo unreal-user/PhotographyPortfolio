@@ -67,7 +67,8 @@ def lambda_handler(event, context):
                     'heroPhotoId': None,
                     'heroImageUrl': None,
                     'title': 'Photography Portfolio',
-                    'subtitle': 'Capturing life one frame at a time'
+                    'subtitle': 'Capturing life one frame at a time',
+                    'fitImageToContainer': False
                 }, allowed_origin)
             # Return defaults for about settings
             if setting_id == 'about':
@@ -77,6 +78,7 @@ def lambda_handler(event, context):
                     'heroImageUrl': None,
                     'title': 'About Me',
                     'subtitle': 'Telling stories through the lens',
+                    'fitImageToContainer': False,
                     'sections': [
                         {
                             'heading': 'My Journey',

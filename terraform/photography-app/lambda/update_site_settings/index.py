@@ -87,6 +87,11 @@ def lambda_handler(event, context):
                 except (ValueError, TypeError):
                     return error_response(400, 'Gallery columns must be a number', 'ValidationError', allowed_origin)
 
+            # Validate fitImageToContainer if provided
+            if 'fitImageToContainer' in body:
+                if not isinstance(body.get('fitImageToContainer'), bool):
+                    return error_response(400, 'fitImageToContainer must be a boolean', 'ValidationError', allowed_origin)
+
             # Validate photo exists and is published
             if hero_photo_id:
                 photos_table = dynamodb.Table(os.environ['PHOTOS_TABLE_NAME'])
@@ -122,6 +127,11 @@ def lambda_handler(event, context):
                     return error_response(400, f'Section {i + 1} heading is required', 'ValidationError', allowed_origin)
                 if not section.get('body'):
                     return error_response(400, f'Section {i + 1} body is required', 'ValidationError', allowed_origin)
+
+            # Validate fitImageToContainer if provided
+            if 'fitImageToContainer' in body:
+                if not isinstance(body.get('fitImageToContainer'), bool):
+                    return error_response(400, 'fitImageToContainer must be a boolean', 'ValidationError', allowed_origin)
 
             # Validate photo exists and is published
             if about_photo_id:

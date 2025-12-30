@@ -14,6 +14,7 @@ const defaultHeroSettings: HeroSettings = {
   subtitle: 'Capturing life one frame at a time',
   heroImageUrl: null,
   galleryColumns: 3,
+  fitImageToContainer: false,
 };
 
 const HomePage = () => {
@@ -57,6 +58,7 @@ const HomePage = () => {
         title={settings.title}
         subtitle={settings.subtitle}
         isLoading={isLoading}
+        fitImageToContainer={settings.fitImageToContainer}
       />
 
       {isLoading ? (

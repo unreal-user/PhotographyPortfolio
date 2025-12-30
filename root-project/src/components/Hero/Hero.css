@@ -9,6 +9,10 @@
   overflow: hidden;
 }
 
+.hero--contain {
+  background-size: contain;
+}
+
 @media (min-width: 768px) {
   .hero {
     height: 80vh;

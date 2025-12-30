@@ -20,6 +20,7 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
     title: '',
     subtitle: '',
     sections: [] as AboutSection[],
+    fitImageToContainer: false,
   });
   const [publishedPhotos, setPublishedPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +48,7 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
         title: settings.title,
         subtitle: settings.subtitle,
         sections: settings.sections || [],
+        fitImageToContainer: settings.fitImageToContainer || false,
       });
       setPublishedPhotos(photosResponse.photos);
     } catch (err) {
@@ -74,8 +76,8 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handlePhotoSelect = (photoId: string) => {
@@ -138,6 +140,7 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
         title: formData.title,
         subtitle: formData.subtitle,
         sections: formData.sections,
+        fitImageToContainer: formData.fitImageToContainer,
       });
 
       onSettingsUpdated();
@@ -222,6 +225,24 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
                   placeholder="Telling stories through the lens"
                   disabled={isSaving}
                 />
+              </div>
+
+              {/* Fit Image to Container */}
+              <div className="about-settings-form-group">
+                <label className="about-settings-label">
+                  <input
+                    type="checkbox"
+                    name="fitImageToContainer"
+                    checked={formData.fitImageToContainer}
+                    onChange={handleInputChange}
+                    disabled={isSaving}
+                    style={{ marginRight: '8px' }}
+                  />
+                  Fit entire image in banner
+                </label>
+                <p className="about-settings-hint">
+                  When checked, the full image will be visible with empty space on the sides if needed. When unchecked, the image will fill the entire banner area.
+                </p>
               </div>
 
               {/* Photo Selection */}

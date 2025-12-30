@@ -33,6 +33,7 @@ const AboutPage: React.FC = () => {
         title={title}
         subtitle={subtitle}
         isLoading={isLoading}
+        fitImageToContainer={settings?.fitImageToContainer}
       />
 
       <div className="about-container">

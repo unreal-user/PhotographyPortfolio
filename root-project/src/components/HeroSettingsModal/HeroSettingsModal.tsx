@@ -19,6 +19,7 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
     title: '',
     subtitle: '',
     galleryColumns: 3,
+    fitImageToContainer: false,
   });
   const [publishedPhotos, setPublishedPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +47,7 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
         title: settings.title,
         subtitle: settings.subtitle,
         galleryColumns: settings.galleryColumns || 3,
+        fitImageToContainer: settings.fitImageToContainer || false,
       });
       setPublishedPhotos(photosResponse.photos);
     } catch (err) {
@@ -65,10 +67,11 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'galleryColumns' ? parseInt(value, 10) : value
+      [name]: type === 'checkbox' ? checked : (name === 'galleryColumns' ? parseInt(value, 10) : value)
     }));
   };
 
@@ -92,6 +95,7 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
         title: formData.title,
         subtitle: formData.subtitle,
         galleryColumns: formData.galleryColumns,
+        fitImageToContainer: formData.fitImageToContainer,
       });
 
       onSettingsUpdated();
@@ -122,7 +126,7 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
     <div className="hero-settings-backdrop" onClick={handleBackdropClick}>
       <div className="hero-settings-modal">
         <div className="hero-settings-header">
-          <h2>Hero Section Settings</h2>
+          <h2>Home Page Settings</h2>
           <button
             type="button"
             className="hero-settings-close"
@@ -195,6 +199,24 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
                   <option value={5}>5 Columns</option>
                   <option value={6}>6 Columns</option>
                 </select>
+              </div>
+
+              {/* Fit Image to Container */}
+              <div className="hero-settings-form-group">
+                <label className="hero-settings-label">
+                  <input
+                    type="checkbox"
+                    name="fitImageToContainer"
+                    checked={formData.fitImageToContainer}
+                    onChange={handleInputChange}
+                    disabled={isSaving}
+                    style={{ marginRight: '8px' }}
+                  />
+                  Fit entire image in banner
+                </label>
+                <p className="hero-settings-hint">
+                  When checked, the full image will be visible with empty space on the sides if needed. When unchecked, the image will fill the entire banner area.
+                </p>
               </div>
 
               {/* Photo Selection */}

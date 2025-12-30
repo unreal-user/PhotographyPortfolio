@@ -6,6 +6,7 @@ interface HeroProps {
   title?: string;
   subtitle?: string;
   isLoading?: boolean;
+  fitImageToContainer?: boolean;
 }
 
 export const Hero: React.FC<HeroProps> = ({
@@ -13,6 +14,7 @@ export const Hero: React.FC<HeroProps> = ({
   title = "Photography Portfolio",
   subtitle = "Capturing life one frame at a time",
   isLoading = false,
+  fitImageToContainer = false,
 }) => {
   if (isLoading) {
     return (
@@ -28,7 +30,7 @@ export const Hero: React.FC<HeroProps> = ({
 
   return (
     <section
-      className="hero"
+      className={`hero ${fitImageToContainer ? 'hero--contain' : ''}`}
       style={{ backgroundImage: imageUrl ? `url(${imageUrl})` : undefined }}
     >
       <div className="hero-overlay" />

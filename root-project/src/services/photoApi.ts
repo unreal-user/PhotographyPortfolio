@@ -256,6 +256,7 @@ export interface HeroSettings {
   title: string;
   subtitle: string;
   galleryColumns?: number;
+  fitImageToContainer?: boolean;
   updatedAt?: string;
 }
 
@@ -264,6 +265,7 @@ export interface UpdateHeroSettingsRequest {
   title: string;
   subtitle: string;
   galleryColumns?: number;
+  fitImageToContainer?: boolean;
 }
 
 // ============================================================================
@@ -360,6 +362,7 @@ export interface AboutSettings {
   title: string;
   subtitle: string;
   sections: AboutSection[];
+  fitImageToContainer?: boolean;
   updatedAt?: string;
 }
 
@@ -368,4 +371,5 @@ export interface UpdateAboutSettingsRequest {
   title: string;
   subtitle: string;
   sections: AboutSection[];
+  fitImageToContainer?: boolean;
 }
