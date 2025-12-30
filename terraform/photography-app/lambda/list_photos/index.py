@@ -68,14 +68,19 @@ def enrich_photo_with_urls(photo, cloudfront_domain):
     """
     Add thumbnailUrl and fullResUrl to photo object.
 
-    For Phase 7, both thumbnail and full-res use the same CloudFront URL.
-    In future phases, we could implement Lambda@Edge for dynamic resizing.
+    Thumbnail: Uses thumbnails/* prefix for optimized gallery display
+    Full-res: Uses original key (uploads/*, originals/*, archive/*)
     """
     if 'originalKey' in photo:
-        # Both use the same URL for now (CloudFront serves original)
-        url = generate_cloudfront_url(photo['originalKey'], cloudfront_domain)
-        photo['thumbnailUrl'] = url
-        photo['fullResUrl'] = url
+        # Full resolution URL (original image)
+        photo['fullResUrl'] = generate_cloudfront_url(photo['originalKey'], cloudfront_domain)
+
+        # Thumbnail URL (optimized for gallery display)
+        # Extract filename from original key and use thumbnails/ prefix
+        import os
+        filename = os.path.basename(photo['originalKey'])
+        thumbnail_key = f"thumbnails/{filename}"
+        photo['thumbnailUrl'] = generate_cloudfront_url(thumbnail_key, cloudfront_domain)
 
     return photo
 
