@@ -40,7 +40,7 @@ def lambda_handler(event, context):
         print(f"Processing thumbnail for: s3://{bucket_name}/{source_key}")
 
         # Skip if not an image file
-        if not source_key.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+        if not source_key.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.avif')):
             print(f"Skipping non-image file: {source_key}")
             return {'statusCode': 200, 'body': 'Not an image file'}
 
@@ -60,6 +60,9 @@ def lambda_handler(event, context):
         response = s3_client.get_object(Bucket=bucket_name, Key=source_key)
         image_data = response['Body'].read()
         content_type = response['ContentType']
+
+        image_size_mb = len(image_data) / (1024 * 1024)
+        print(f"Image size: {image_size_mb:.2f} MB, Content-Type: {content_type}")
 
         # Generate thumbnail (400px for galleries)
         print(f"Generating thumbnail (max width: {THUMBNAIL_WIDTH}px)")
@@ -117,7 +120,9 @@ def resize_image(image_data, content_type, max_width):
         Binary resized image data
     """
     # Open image with Pillow
+    print(f"Opening image with Pillow (content_type: {content_type})")
     img = Image.open(BytesIO(image_data))
+    print(f"Image opened: {img.format}, size: {img.size}, mode: {img.mode}")
 
     # Convert RGBA to RGB if necessary (for JPEG compatibility)
     if img.mode in ('RGBA', 'LA', 'P'):
@@ -143,11 +148,14 @@ def resize_image(image_data, content_type, max_width):
     # Resize image with high-quality resampling
     img_resized = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
-    # Determine output format
+    # Determine output format based on content type
+    # Note: AVIF files are converted to JPEG for broad compatibility
     if content_type == 'image/png':
         output_format = 'PNG'
     elif content_type == 'image/webp':
         output_format = 'WEBP'
+    elif content_type == 'image/avif':
+        output_format = 'JPEG'  # Convert AVIF to JPEG for compatibility
     else:
         output_format = 'JPEG'
 

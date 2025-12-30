@@ -1284,8 +1284,8 @@ resource "aws_lambda_function" "generate_thumbnail" {
   role          = aws_iam_role.lambda_execution_role.arn
   handler       = "index.lambda_handler"
   runtime       = "python3.12"
-  timeout       = 60  # Image processing can take time
-  memory_size   = 512 # More memory for Pillow image processing
+  timeout       = 60   # Image processing can take time
+  memory_size   = 2048 # 2GB for processing large images (35MB+ JPEGs)
 
   source_code_hash = filebase64sha256("${path.module}/generate_thumbnail.zip")
 
