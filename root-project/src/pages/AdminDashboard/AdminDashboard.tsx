@@ -318,14 +318,14 @@ const AdminDashboard: React.FC = () => {
       {activeTab === 'settings' ? (
         <div className="admin-dashboard-settings">
           <div className="admin-settings-card">
-            <h3>Hero Section</h3>
-            <p>Configure the hero image, title, and subtitle shown on the homepage.</p>
+            <h3>Home Page</h3>
+            <p>Configure the main image, title, and subtitle shown on the homepage.</p>
             <button
               type="button"
               className="admin-dashboard-upload-button"
               onClick={() => setShowHeroSettingsModal(true)}
             >
-              Edit Hero Settings
+              Edit Home Page Settings
             </button>
           </div>
 
@@ -337,7 +337,7 @@ const AdminDashboard: React.FC = () => {
               className="admin-dashboard-upload-button"
               onClick={() => setShowAboutSettingsModal(true)}
             >
-              Edit About Page
+              Edit About Page Settings
             </button>
           </div>
         </div>

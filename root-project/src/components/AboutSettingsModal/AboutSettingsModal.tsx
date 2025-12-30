@@ -238,10 +238,10 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
                     disabled={isSaving}
                     style={{ marginRight: '8px' }}
                   />
-                  Fit entire image in banner
+                  Show full image on About page
                 </label>
                 <p className="about-settings-hint">
-                  When checked, the full image will be visible with empty space on the sides if needed. When unchecked, the image will fill the entire banner area.
+                  When checked, the full image will be visible with empty space on the sides if needed. When unchecked, the image will fill the entire screen width.
                 </p>
               </div>
 

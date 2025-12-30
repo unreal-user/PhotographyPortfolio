@@ -178,7 +178,7 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
               </div>
 
               {/* Gallery Columns */}
-              <div className="hero-settings-form-group">
+              {/* <div className="hero-settings-form-group">
                 <label htmlFor="gallery-columns" className="hero-settings-label">
                   Gallery Columns
                 </label>
@@ -199,7 +199,7 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
                   <option value={5}>5 Columns</option>
                   <option value={6}>6 Columns</option>
                 </select>
-              </div>
+              </div> */}
 
               {/* Fit Image to Container */}
               <div className="hero-settings-form-group">
@@ -212,10 +212,10 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
                     disabled={isSaving}
                     style={{ marginRight: '8px' }}
                   />
-                  Fit entire image in banner
+                  Show full image on Home page
                 </label>
-                <p className="hero-settings-hint">
-                  When checked, the full image will be visible with empty space on the sides if needed. When unchecked, the image will fill the entire banner area.
+                <p className="about-settings-hint">
+                  When checked, the full image will be visible with empty space on the sides if needed. When unchecked, the image will fill the entire screen width.
                 </p>
               </div>
 
