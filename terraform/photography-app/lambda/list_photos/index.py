@@ -68,19 +68,22 @@ def enrich_photo_with_urls(photo, cloudfront_domain):
     """
     Add thumbnailUrl and fullResUrl to photo object.
 
-    Thumbnail: Uses thumbnails/* prefix for optimized gallery display
-    Full-res: Uses original key (uploads/*, originals/*, archive/*)
+    Thumbnail: thumbnails/* (400px) - For gallery grid
+    Full-res: display/* (1920px) - For lightbox/full-screen viewing
+    Original: originalKey - Full resolution (not exposed to frontend)
     """
     if 'originalKey' in photo:
-        # Full resolution URL (original image)
-        photo['fullResUrl'] = generate_cloudfront_url(photo['originalKey'], cloudfront_domain)
-
-        # Thumbnail URL (optimized for gallery display)
-        # Extract filename from original key and use thumbnails/ prefix
+        # Extract filename from original key
         import os
         filename = os.path.basename(photo['originalKey'])
+
+        # Thumbnail URL (400px for gallery display)
         thumbnail_key = f"thumbnails/{filename}"
         photo['thumbnailUrl'] = generate_cloudfront_url(thumbnail_key, cloudfront_domain)
+
+        # Display URL (1920px for full-screen viewing)
+        display_key = f"display/{filename}"
+        photo['fullResUrl'] = generate_cloudfront_url(display_key, cloudfront_domain)
 
     return photo
 

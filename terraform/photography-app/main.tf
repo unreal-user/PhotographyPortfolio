@@ -1328,7 +1328,10 @@ resource "aws_iam_policy" "lambda_s3_thumbnail_policy" {
         Action = [
           "s3:PutObject"
         ]
-        Resource = "${aws_s3_bucket.photos.arn}/thumbnails/*"
+        Resource = [
+          "${aws_s3_bucket.photos.arn}/thumbnails/*",
+          "${aws_s3_bucket.photos.arn}/display/*"
+        ]
       }
     ]
   })

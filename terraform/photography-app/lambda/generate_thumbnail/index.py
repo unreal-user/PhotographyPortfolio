@@ -7,16 +7,19 @@ from io import BytesIO
 
 s3_client = boto3.client('s3')
 
-# Thumbnail configuration
-THUMBNAIL_WIDTH = 400  # Max width in pixels
-THUMBNAIL_QUALITY = 85  # JPEG quality (1-100)
+# Image size configuration
+THUMBNAIL_WIDTH = 400   # Max width for gallery thumbnails
+DISPLAY_WIDTH = 1920    # Max width for hero/full-screen display
+IMAGE_QUALITY = 85      # JPEG quality (1-100)
 
 def lambda_handler(event, context):
     """
     Generate thumbnails for uploaded images.
 
     Triggered by S3 upload events (uploads/* prefix).
-    Creates resized thumbnails in thumbnails/* prefix.
+    Creates two optimized versions:
+    - thumbnails/* (400px) - For gallery display
+    - display/* (1920px) - For hero images and full-screen viewing
 
     Event format:
     {
@@ -41,16 +44,16 @@ def lambda_handler(event, context):
             print(f"Skipping non-image file: {source_key}")
             return {'statusCode': 200, 'body': 'Not an image file'}
 
-        # Skip if already a thumbnail
-        if source_key.startswith('thumbnails/'):
-            print(f"Skipping thumbnail file: {source_key}")
-            return {'statusCode': 200, 'body': 'Already a thumbnail'}
+        # Skip if already a processed image
+        if source_key.startswith('thumbnails/') or source_key.startswith('display/'):
+            print(f"Skipping already processed file: {source_key}")
+            return {'statusCode': 200, 'body': 'Already processed'}
 
-        # Generate thumbnail key (preserve filename, change prefix)
-        # uploads/abc-123.jpg -> thumbnails/abc-123.jpg
-        # originals/abc-123.jpg -> thumbnails/abc-123.jpg
+        # Generate keys (preserve filename, change prefix)
+        # uploads/abc-123.jpg -> thumbnails/abc-123.jpg, display/abc-123.jpg
         filename = os.path.basename(source_key)
         thumbnail_key = f"thumbnails/{filename}"
+        display_key = f"display/{filename}"
 
         # Download original image from S3
         print(f"Downloading original image: {source_key}")
@@ -58,9 +61,13 @@ def lambda_handler(event, context):
         image_data = response['Body'].read()
         content_type = response['ContentType']
 
-        # Generate thumbnail
+        # Generate thumbnail (400px for galleries)
         print(f"Generating thumbnail (max width: {THUMBNAIL_WIDTH}px)")
-        thumbnail_data = generate_thumbnail(image_data, content_type)
+        thumbnail_data = resize_image(image_data, content_type, THUMBNAIL_WIDTH)
+
+        # Generate display size (1920px for hero/full-screen)
+        print(f"Generating display size (max width: {DISPLAY_WIDTH}px)")
+        display_data = resize_image(image_data, content_type, DISPLAY_WIDTH)
 
         # Upload thumbnail to S3
         print(f"Uploading thumbnail: {thumbnail_key}")
@@ -69,10 +76,20 @@ def lambda_handler(event, context):
             Key=thumbnail_key,
             Body=thumbnail_data,
             ContentType=content_type,
-            CacheControl='max-age=31536000',  # Cache for 1 year
+            CacheControl='max-age=31536000',
         )
 
-        print(f"✓ Thumbnail created successfully: {thumbnail_key}")
+        # Upload display size to S3
+        print(f"Uploading display size: {display_key}")
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=display_key,
+            Body=display_data,
+            ContentType=content_type,
+            CacheControl='max-age=31536000',
+        )
+
+        print(f"✓ Images created successfully: {thumbnail_key}, {display_key}")
 
         return {
             'statusCode': 200,
@@ -87,16 +104,17 @@ def lambda_handler(event, context):
             'body': f'Error: {str(e)}'
         }
 
-def generate_thumbnail(image_data, content_type):
+def resize_image(image_data, content_type, max_width):
     """
-    Resize image to thumbnail size.
+    Resize image to specified max width.
 
     Args:
         image_data: Binary image data
         content_type: MIME type of the image
+        max_width: Maximum width in pixels
 
     Returns:
-        Binary thumbnail data
+        Binary resized image data
     """
     # Open image with Pillow
     img = Image.open(BytesIO(image_data))
@@ -112,15 +130,15 @@ def generate_thumbnail(image_data, content_type):
     # Calculate new dimensions (maintain aspect ratio)
     original_width, original_height = img.size
 
-    if original_width <= THUMBNAIL_WIDTH:
-        # Image is already smaller than thumbnail size
+    if original_width <= max_width:
+        # Image is already smaller than target size
         new_width = original_width
         new_height = original_height
     else:
-        # Resize to thumbnail width, maintaining aspect ratio
+        # Resize to max width, maintaining aspect ratio
         aspect_ratio = original_height / original_width
-        new_width = THUMBNAIL_WIDTH
-        new_height = int(THUMBNAIL_WIDTH * aspect_ratio)
+        new_width = max_width
+        new_height = int(max_width * aspect_ratio)
 
     # Resize image with high-quality resampling
     img_resized = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
@@ -136,9 +154,9 @@ def generate_thumbnail(image_data, content_type):
     # Save to bytes buffer
     buffer = BytesIO()
     if output_format == 'JPEG':
-        img_resized.save(buffer, format=output_format, quality=THUMBNAIL_QUALITY, optimize=True)
+        img_resized.save(buffer, format=output_format, quality=IMAGE_QUALITY, optimize=True)
     elif output_format == 'WEBP':
-        img_resized.save(buffer, format=output_format, quality=THUMBNAIL_QUALITY)
+        img_resized.save(buffer, format=output_format, quality=IMAGE_QUALITY)
     else:
         img_resized.save(buffer, format=output_format, optimize=True)
 

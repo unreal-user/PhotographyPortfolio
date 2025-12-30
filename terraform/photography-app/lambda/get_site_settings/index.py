@@ -107,7 +107,10 @@ def lambda_handler(event, context):
             if 'Item' in photo_response:
                 photo = photo_response['Item']
                 original_key = photo.get('originalKey', '')
-                data['heroImageUrl'] = f"https://{cloudfront_domain}/{original_key}"
+                # Use display/* version for hero images (1920px optimized)
+                filename = os.path.basename(original_key)
+                display_key = f"display/{filename}"
+                data['heroImageUrl'] = f"https://{cloudfront_domain}/{display_key}"
             else:
                 # Photo was deleted, clear the reference
                 data['heroImageUrl'] = None
@@ -124,7 +127,10 @@ def lambda_handler(event, context):
             if 'Item' in photo_response:
                 photo = photo_response['Item']
                 original_key = photo.get('originalKey', '')
-                data['heroImageUrl'] = f"https://{cloudfront_domain}/{original_key}"
+                # Use display/* version for hero images (1920px optimized)
+                filename = os.path.basename(original_key)
+                display_key = f"display/{filename}"
+                data['heroImageUrl'] = f"https://{cloudfront_domain}/{display_key}"
             else:
                 # Photo was deleted, clear the reference
                 data['heroImageUrl'] = None
