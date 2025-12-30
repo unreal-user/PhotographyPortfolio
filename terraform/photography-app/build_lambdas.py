@@ -29,9 +29,19 @@ def build_lambda_package(lambda_dir, output_dir):
             temp_path = Path(temp_dir)
 
             # Install dependencies to temp directory
+            # Use pre-built wheels compatible with AWS Lambda (Amazon Linux 2)
             print(f"  Installing dependencies for {function_name}...")
             subprocess.run(
-                ["pip", "install", "-r", str(requirements_txt), "-t", str(temp_path), "--quiet"],
+                [
+                    "pip", "install",
+                    "-r", str(requirements_txt),
+                    "-t", str(temp_path),
+                    "--platform", "manylinux2014_x86_64",
+                    "--only-binary=:all:",
+                    "--python-version", "3.12",
+                    "--implementation", "cp",
+                    "--quiet"
+                ],
                 check=True
             )
 
