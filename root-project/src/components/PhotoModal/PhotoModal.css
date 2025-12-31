@@ -112,6 +112,10 @@
   justify-content: center;
 }
 
+.modal-image-container.zoomed {
+  cursor: grab;
+}
+
 .modal-figure img {
   max-width: 100%;
   max-height: calc(90vh - 100px);
