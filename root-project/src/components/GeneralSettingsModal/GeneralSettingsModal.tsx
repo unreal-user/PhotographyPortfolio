@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { extendedSettingsApi, ThemeMode } from '../../services/photoApi';
+import { extendedSettingsApi } from '../../services/photoApi';
+import type { ThemeMode } from '../../services/photoApi';
 import './GeneralSettingsModal.css';
 
 interface GeneralSettingsModalProps {

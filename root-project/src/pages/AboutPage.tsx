@@ -54,7 +54,7 @@ const AboutPage: React.FC = () => {
             ))}
 
             {/* Static Services Section */}
-            <section className="about-section">
+            {/* <section className="about-section">
               <h2 className="about-heading">Services</h2>
               <ul className="about-list">
                 <li className="about-list-item">Portrait Photography</li>
@@ -67,10 +67,10 @@ const AboutPage: React.FC = () => {
                 </li>
                 <li className="about-list-item">Photo Editing & Retouching</li>
               </ul>
-            </section>
+            </section> */}
 
             {/* Static CTA Section */}
-            <section className="about-section about-cta">
+            {/* <section className="about-section about-cta">
               <h2 className="about-heading">Let's Work Together</h2>
               <p className="about-text">
                 I'm always excited to collaborate on new projects and bring
@@ -81,7 +81,7 @@ const AboutPage: React.FC = () => {
               <a href="/contact" className="about-cta-button">
                 Get In Touch
               </a>
-            </section>
+            </section> */}
           </>
         )}
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Hero } from '../components/Hero/Hero';
-import { extendedSettingsApi, ContactSettings } from '../services/photoApi';
+import { extendedSettingsApi } from '../services/photoApi';
+import type { ContactSettings } from '../services/photoApi';
 import './ContactPage.css';
 
 const ContactPage: React.FC = () => {
