@@ -92,7 +92,7 @@ def lambda_handler(event, context):
                 if not isinstance(body.get('fitImageToContainer'), bool):
                     return error_response(400, 'fitImageToContainer must be a boolean', 'ValidationError', allowed_origin)
 
-            # Validate photo exists and is published
+            # Validate photo exists (allow any status: pending, published, or archived)
             if hero_photo_id:
                 photos_table = dynamodb.Table(os.environ['PHOTOS_TABLE_NAME'])
                 photo_response = photos_table.get_item(
@@ -101,9 +101,6 @@ def lambda_handler(event, context):
 
                 if 'Item' not in photo_response:
                     return error_response(400, 'Photo not found', 'ValidationError', allowed_origin)
-
-                if photo_response['Item'].get('status') != 'published':
-                    return error_response(400, 'Only published photos can be used as hero image', 'ValidationError', allowed_origin)
 
         # Validate about settings
         if setting_id == 'about':
@@ -133,7 +130,7 @@ def lambda_handler(event, context):
                 if not isinstance(body.get('fitImageToContainer'), bool):
                     return error_response(400, 'fitImageToContainer must be a boolean', 'ValidationError', allowed_origin)
 
-            # Validate photo exists and is published
+            # Validate photo exists (allow any status: pending, published, or archived)
             if about_photo_id:
                 photos_table = dynamodb.Table(os.environ['PHOTOS_TABLE_NAME'])
                 photo_response = photos_table.get_item(
@@ -142,9 +139,6 @@ def lambda_handler(event, context):
 
                 if 'Item' not in photo_response:
                     return error_response(400, 'Photo not found', 'ValidationError', allowed_origin)
-
-                if photo_response['Item'].get('status') != 'published':
-                    return error_response(400, 'Only published photos can be used as about hero image', 'ValidationError', allowed_origin)
 
         # Update settings in DynamoDB
         settings_table = dynamodb.Table(os.environ['SITE_SETTINGS_TABLE_NAME'])
