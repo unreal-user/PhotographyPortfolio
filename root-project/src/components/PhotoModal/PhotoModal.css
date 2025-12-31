@@ -45,6 +45,55 @@
   background-color: rgba(0, 0, 0, 0.8);
 }
 
+/* Zoom Controls */
+.modal-zoom-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 12px;
+  border-radius: 24px;
+  z-index: 1001;
+}
+
+.modal-zoom-controls button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-zoom-controls button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.modal-zoom-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.modal-zoom-level {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 50px;
+  text-align: center;
+}
+
 .modal-figure {
   margin: 0;
   display: flex;
@@ -53,11 +102,28 @@
   gap: 12px;
 }
 
+.modal-image-container {
+  overflow: hidden;
+  position: relative;
+  max-width: 100%;
+  max-height: calc(90vh - 100px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-image-container.zoomed {
+  cursor: grab;
+}
+
 .modal-figure img {
   max-width: 100%;
   max-height: calc(90vh - 100px);
   height: auto;
   display: block;
+  transition: transform 0.1s ease-out;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .modal-copyright {
