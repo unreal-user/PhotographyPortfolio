@@ -5,6 +5,7 @@ import PhotoCard from '../../components/PhotoCard/PhotoCard';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 import EditPhotoModal from '../../components/EditPhotoModal/EditPhotoModal';
 import { BatchUploadModal } from '../../components/BatchUploadModal/BatchUploadModal';
+import { AssignGalleryModal } from '../../components/AssignGalleryModal/AssignGalleryModal';
 import HeroSettingsModal from '../../components/HeroSettingsModal/HeroSettingsModal';
 import AboutSettingsModal from '../../components/AboutSettingsModal/AboutSettingsModal';
 import './AdminDashboard.css';
@@ -16,6 +17,7 @@ const AdminDashboard: React.FC = () => {
   // State
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [allGalleries, setAllGalleries] = useState<string[]>([]); // All galleries across all tabs
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGallery, setSelectedGallery] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +26,7 @@ const AdminDashboard: React.FC = () => {
   // Phase 6d: Selection state
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
   const [showBatchUploadModal, setShowBatchUploadModal] = useState(false);
+  const [showAssignGalleryModal, setShowAssignGalleryModal] = useState(false);
   const [showHeroSettingsModal, setShowHeroSettingsModal] = useState(false);
   const [showAboutSettingsModal, setShowAboutSettingsModal] = useState(false);
 
@@ -41,6 +44,11 @@ const AdminDashboard: React.FC = () => {
     photo: null,
     action: null,
   });
+
+  // Load all galleries on mount (from pending + published)
+  useEffect(() => {
+    loadAllGalleries();
+  }, []);
 
   // Load photos when tab changes (except for settings tab)
   useEffect(() => {
@@ -67,6 +75,27 @@ const AdminDashboard: React.FC = () => {
       console.error('Error loading photos:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadAllGalleries = async () => {
+    try {
+      // Fetch from both pending and published to get all galleries
+      const [pendingResponse, publishedResponse] = await Promise.all([
+        photoApi.listPhotos('pending', 100),
+        photoApi.listPhotos('published', 100)
+      ]);
+
+      const allPhotos = [...pendingResponse.photos, ...publishedResponse.photos];
+      const galleries = Array.from(new Set(
+        allPhotos
+          .map(p => p.gallery)
+          .filter((g): g is string => !!g && g !== '' && g !== 'Uncategorized')
+      )).sort();
+
+      setAllGalleries(galleries);
+    } catch (err) {
+      console.error('Error loading galleries:', err);
     }
   };
 
@@ -126,59 +155,22 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleBulkAssignGallery = async () => {
+  const handleBulkAssignGallery = () => {
     if (selectedPhotoIds.size === 0) return;
     if (selectedPhotoIds.size > 100) {
       alert('Maximum 100 photos can be bulk updated at once. Please select fewer photos.');
       return;
     }
+    setShowAssignGalleryModal(true);
+  };
 
-    // Get unique galleries from current photos
-    const existingGalleries = Array.from(new Set(
-      photos
-        .map(p => p.gallery)
-        .filter(g => g && g !== 'Uncategorized')
-    )).sort();
-
-    // Create select dropdown HTML
-    const gallerySelectHTML = `
-      <div>
-        <label for="gallery-select" style="display: block; margin-bottom: 8px;">Select gallery:</label>
-        <select id="gallery-select" style="width: 100%; padding: 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc;">
-          ${existingGalleries.map(g => `<option value="${g}">${g}</option>`).join('')}
-          <option value="__custom__">+ New Gallery</option>
-        </select>
-        <input id="custom-gallery" type="text" placeholder="Enter new gallery name" style="width: 100%; margin-top: 8px; padding: 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; display: none;">
-      </div>
-    `;
-
-    // Show custom input when "New Gallery" is selected
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = gallerySelectHTML;
-    const selectEl = tempDiv.querySelector('#gallery-select') as HTMLSelectElement;
-    const customInputEl = tempDiv.querySelector('#custom-gallery') as HTMLInputElement;
-
-    if (selectEl && customInputEl) {
-      selectEl.addEventListener('change', () => {
-        if (selectEl.value === '__custom__') {
-          customInputEl.style.display = 'block';
-        } else {
-          customInputEl.style.display = 'none';
-        }
-      });
-    }
-
-    // Simple prompt-based approach (can be enhanced with a proper modal later)
-    const galleryName = prompt(
-      `Assign ${selectedPhotoIds.size} photo(s) to gallery:\n\nExisting galleries: ${existingGalleries.length > 0 ? existingGalleries.join(', ') : 'None'}\n\nEnter gallery name:`
-    );
-
-    if (!galleryName || galleryName.trim() === '') return;
-
+  const handleAssignGalleryConfirm = async (galleryName: string) => {
     try {
-      await photoApi.bulkUpdatePhotos(Array.from(selectedPhotoIds), { gallery: galleryName.trim() });
+      await photoApi.bulkUpdatePhotos(Array.from(selectedPhotoIds), { gallery: galleryName });
       setSelectedPhotoIds(new Set());
+      setShowAssignGalleryModal(false);
       loadPhotos();
+      loadAllGalleries(); // Refresh galleries in case new one was created
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to assign gallery');
     }
@@ -515,8 +507,19 @@ const AdminDashboard: React.FC = () => {
       <BatchUploadModal
         isOpen={showBatchUploadModal}
         onClose={() => setShowBatchUploadModal(false)}
-        onComplete={loadPhotos}
-        existingGalleries={galleries.filter(g => g !== 'Uncategorized')}
+        onComplete={() => {
+          loadPhotos();
+          loadAllGalleries(); // Refresh galleries in case new one was created
+        }}
+        existingGalleries={allGalleries}
+      />
+
+      <AssignGalleryModal
+        isOpen={showAssignGalleryModal}
+        onClose={() => setShowAssignGalleryModal(false)}
+        onAssign={handleAssignGalleryConfirm}
+        existingGalleries={allGalleries}
+        selectedCount={selectedPhotoIds.size}
       />
 
       <HeroSettingsModal
