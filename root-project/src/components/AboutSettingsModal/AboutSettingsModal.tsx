@@ -22,7 +22,8 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
     sections: [] as AboutSection[],
     fitImageToContainer: false,
   });
-  const [publishedPhotos, setPublishedPhotos] = useState<Photo[]>([]);
+  const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,10 +39,19 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
     setError(null);
 
     try {
-      const [settings, photosResponse] = await Promise.all([
+      const [settings, pendingPhotos, publishedPhotos, archivedPhotos] = await Promise.all([
         settingsApi.getAboutSettings(),
+        photoApi.listPhotos('pending', 100),
         photoApi.listPhotos('published', 100),
+        photoApi.listPhotos('archived', 100),
       ]);
+
+      // Combine all photos from all statuses
+      const combinedPhotos = [
+        ...publishedPhotos.photos,
+        ...pendingPhotos.photos,
+        ...archivedPhotos.photos,
+      ];
 
       setFormData({
         heroPhotoId: settings.heroPhotoId || '',
@@ -50,7 +60,7 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
         sections: settings.sections || [],
         fitImageToContainer: settings.fitImageToContainer || false,
       });
-      setPublishedPhotos(photosResponse.photos);
+      setAllPhotos(combinedPhotos);
     } catch (err) {
       setError('Failed to load settings');
       console.error('Load error:', err);
@@ -165,7 +175,14 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
     }
   };
 
-  const selectedPhoto = publishedPhotos.find(
+  // Filter photos by search query and limit to 10 results
+  const filteredPhotos = allPhotos
+    .filter((photo) =>
+      photo.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .slice(0, 10);
+
+  const selectedPhoto = allPhotos.find(
     (p) => p.photoId === formData.heroPhotoId
   );
 
@@ -249,8 +266,19 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
               <div className="about-settings-form-group">
                 <label className="about-settings-label">Hero Image</label>
                 <p className="about-settings-hint">
-                  Select from your published photos
+                  Search and select from all your photos
                 </p>
+
+                {/* Search Input */}
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="about-settings-input"
+                  placeholder="Search by image title..."
+                  disabled={isSaving}
+                  style={{ marginBottom: '12px' }}
+                />
 
                 {selectedPhoto && (
                   <div className="about-settings-selected-preview">
@@ -264,31 +292,40 @@ const AboutSettingsModal: React.FC<AboutSettingsModalProps> = ({
                   </div>
                 )}
 
-                {publishedPhotos.length === 0 ? (
+                {allPhotos.length === 0 ? (
                   <p className="about-settings-no-photos">
-                    No published photos available. Publish some photos first.
+                    No photos available. Upload some photos first.
+                  </p>
+                ) : filteredPhotos.length === 0 ? (
+                  <p className="about-settings-no-photos">
+                    No photos match your search. Try a different search term.
                   </p>
                 ) : (
-                  <div className="about-settings-photo-grid">
-                    {publishedPhotos.map((photo) => (
-                      <div
-                        key={photo.photoId}
-                        className={`about-settings-photo-option ${
-                          formData.heroPhotoId === photo.photoId
-                            ? 'selected'
-                            : ''
-                        }`}
-                        onClick={() => handlePhotoSelect(photo.photoId)}
-                      >
-                        <img src={photo.thumbnailUrl} alt={photo.alt} />
-                        {formData.heroPhotoId === photo.photoId && (
-                          <div className="about-settings-photo-check">
-                            &#10003;
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <>
+                    <p className="about-settings-hint" style={{ fontSize: '12px', marginBottom: '8px' }}>
+                      Showing {filteredPhotos.length} of {allPhotos.length} photos
+                    </p>
+                    <div className="about-settings-photo-grid">
+                      {filteredPhotos.map((photo) => (
+                        <div
+                          key={photo.photoId}
+                          className={`about-settings-photo-option ${
+                            formData.heroPhotoId === photo.photoId
+                              ? 'selected'
+                              : ''
+                          }`}
+                          onClick={() => handlePhotoSelect(photo.photoId)}
+                        >
+                          <img src={photo.thumbnailUrl} alt={photo.alt} />
+                          {formData.heroPhotoId === photo.photoId && (
+                            <div className="about-settings-photo-check">
+                              &#10003;
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
 

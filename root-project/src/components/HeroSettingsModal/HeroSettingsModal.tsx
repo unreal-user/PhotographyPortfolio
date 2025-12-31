@@ -21,7 +21,8 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
     galleryColumns: 3,
     fitImageToContainer: false,
   });
-  const [publishedPhotos, setPublishedPhotos] = useState<Photo[]>([]);
+  const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,10 +38,19 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
     setError(null);
 
     try {
-      const [settings, photosResponse] = await Promise.all([
+      const [settings, pendingPhotos, publishedPhotos, archivedPhotos] = await Promise.all([
         settingsApi.getHeroSettings(),
+        photoApi.listPhotos('pending', 100),
         photoApi.listPhotos('published', 100),
+        photoApi.listPhotos('archived', 100),
       ]);
+
+      // Combine all photos from all statuses
+      const combinedPhotos = [
+        ...publishedPhotos.photos,
+        ...pendingPhotos.photos,
+        ...archivedPhotos.photos,
+      ];
 
       setFormData({
         heroPhotoId: settings.heroPhotoId || '',
@@ -49,7 +59,7 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
         galleryColumns: settings.galleryColumns || 3,
         fitImageToContainer: settings.fitImageToContainer || false,
       });
-      setPublishedPhotos(photosResponse.photos);
+      setAllPhotos(combinedPhotos);
     } catch (err) {
       setError('Failed to load settings');
       console.error('Load error:', err);
@@ -120,7 +130,14 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
     }
   };
 
-  const selectedPhoto = publishedPhotos.find((p) => p.photoId === formData.heroPhotoId);
+  // Filter photos by search query and limit to 10 results
+  const filteredPhotos = allPhotos
+    .filter((photo) =>
+      photo.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .slice(0, 10);
+
+  const selectedPhoto = allPhotos.find((p) => p.photoId === formData.heroPhotoId);
 
   return (
     <div className="hero-settings-backdrop" onClick={handleBackdropClick}>
@@ -223,8 +240,19 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
               <div className="hero-settings-form-group">
                 <label className="hero-settings-label">Hero Image</label>
                 <p className="hero-settings-hint">
-                  Select from your published photos
+                  Search and select from all your photos
                 </p>
+
+                {/* Search Input */}
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="hero-settings-input"
+                  placeholder="Search by image title..."
+                  disabled={isSaving}
+                  style={{ marginBottom: '12px' }}
+                />
 
                 {selectedPhoto && (
                   <div className="hero-settings-selected-preview">
@@ -238,27 +266,36 @@ const HeroSettingsModal: React.FC<HeroSettingsModalProps> = ({
                   </div>
                 )}
 
-                {publishedPhotos.length === 0 ? (
+                {allPhotos.length === 0 ? (
                   <p className="hero-settings-no-photos">
-                    No published photos available. Publish some photos first.
+                    No photos available. Upload some photos first.
+                  </p>
+                ) : filteredPhotos.length === 0 ? (
+                  <p className="hero-settings-no-photos">
+                    No photos match your search. Try a different search term.
                   </p>
                 ) : (
-                  <div className="hero-settings-photo-grid">
-                    {publishedPhotos.map((photo) => (
-                      <div
-                        key={photo.photoId}
-                        className={`hero-settings-photo-option ${
-                          formData.heroPhotoId === photo.photoId ? 'selected' : ''
-                        }`}
-                        onClick={() => handlePhotoSelect(photo.photoId)}
-                      >
-                        <img src={photo.thumbnailUrl} alt={photo.alt} />
-                        {formData.heroPhotoId === photo.photoId && (
-                          <div className="hero-settings-photo-check">&#10003;</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <>
+                    <p className="hero-settings-hint" style={{ fontSize: '12px', marginBottom: '8px' }}>
+                      Showing {filteredPhotos.length} of {allPhotos.length} photos
+                    </p>
+                    <div className="hero-settings-photo-grid">
+                      {filteredPhotos.map((photo) => (
+                        <div
+                          key={photo.photoId}
+                          className={`hero-settings-photo-option ${
+                            formData.heroPhotoId === photo.photoId ? 'selected' : ''
+                          }`}
+                          onClick={() => handlePhotoSelect(photo.photoId)}
+                        >
+                          <img src={photo.thumbnailUrl} alt={photo.alt} />
+                          {formData.heroPhotoId === photo.photoId && (
+                            <div className="hero-settings-photo-check">&#10003;</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
 
