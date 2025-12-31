@@ -853,7 +853,8 @@ resource "aws_iam_policy" "lambda_s3_copy_policy" {
         ]
         Resource = [
           "${aws_s3_bucket.photos.arn}/uploads/*",
-          "${aws_s3_bucket.photos.arn}/originals/*"
+          "${aws_s3_bucket.photos.arn}/originals/*",
+          "${aws_s3_bucket.photos.arn}/archive/*"
         ]
       },
       {
