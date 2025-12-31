@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Hero } from '../components/Hero/Hero';
+import { extendedSettingsApi, ContactSettings } from '../services/photoApi';
 import './ContactPage.css';
 
 const ContactPage: React.FC = () => {
@@ -11,6 +12,22 @@ const ContactPage: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [settings, setSettings] = useState<ContactSettings | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const contactSettings = await extendedSettingsApi.getContactSettings();
+        setSettings(contactSettings);
+      } catch (error) {
+        console.error('Failed to load contact settings:', error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+    loadSettings();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -62,9 +79,11 @@ const ContactPage: React.FC = () => {
   return (
     <>
       <Hero
-        imageUrl="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?q=80&w=2072&auto=format&fit=crop"
-        title="Get In Touch"
-        subtitle="Let's create something beautiful together"
+        imageUrl={settings?.heroImageUrl || undefined}
+        title={settings?.title || 'Get In Touch'}
+        subtitle={settings?.subtitle || "Let's create something beautiful together"}
+        isLoading={isLoadingSettings}
+        fitImageToContainer={settings?.fitImageToContainer || false}
       />
 
       <div className="contact-container">
