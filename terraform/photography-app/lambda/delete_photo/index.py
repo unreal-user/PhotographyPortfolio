@@ -93,15 +93,23 @@ def lambda_handler(event, context):
         dest_key = f"archive/{photo_id}.{ext}"
 
         # Copy original to archive
-        s3_client.copy_object(
-            Bucket=bucket,
-            CopySource={'Bucket': bucket, 'Key': source_key},
-            Key=dest_key
-        )
+        print(f"Copying {source_key} to {dest_key}")
+        try:
+            s3_client.copy_object(
+                Bucket=bucket,
+                CopySource={'Bucket': bucket, 'Key': source_key},
+                Key=dest_key
+            )
+            print(f"Successfully copied to {dest_key}")
+        except Exception as e:
+            print(f"Error copying file: {str(e)}")
+            print(f"Source: {source_key}, Dest: {dest_key}, Bucket: {bucket}")
+            raise  # Re-raise to trigger 500 error with logging
 
         # Delete original from uploads/originals
         try:
             s3_client.delete_object(Bucket=bucket, Key=source_key)
+            print(f"Deleted original: {source_key}")
         except Exception as e:
             print(f"Warning: Could not delete original {source_key}: {str(e)}")
 
