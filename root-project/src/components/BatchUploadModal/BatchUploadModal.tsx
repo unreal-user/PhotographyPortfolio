@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useBatchUpload } from '../../hooks/useBatchUpload';
 import './BatchUploadModal.css';
 
@@ -6,14 +6,31 @@ interface BatchUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete: () => void; // Refresh admin page after upload
+  existingGalleries: string[];
 }
 
-export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({ isOpen, onClose, onComplete }) => {
+export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({ isOpen, onClose, onComplete, existingGalleries }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedGallery, setSelectedGallery] = useState<string>('');
+  const [newGalleryName, setNewGalleryName] = useState<string>('');
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploads, isUploading, uploadFiles, retryFailed } = useBatchUpload();
+  const { uploads, isUploading, uploadFiles, retryFailed, clearUploads } = useBatchUpload();
+
+  // Clear state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedFiles([]);
+      setSelectedGallery('');
+      setNewGalleryName('');
+      setIsCreatingNew(false);
+      clearUploads();
+    }
+  }, [isOpen, clearUploads]);
 
   if (!isOpen) return null;
+
+  const effectiveGallery = isCreatingNew ? newGalleryName.trim() : (selectedGallery || 'Uncategorized');
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -23,8 +40,9 @@ export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({ isOpen, onCl
 
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
+    if (isCreatingNew && !newGalleryName.trim()) return;
 
-    const result = await uploadFiles(selectedFiles);
+    const result = await uploadFiles(selectedFiles, effectiveGallery);
 
     if (result.failed.length === 0) {
       // All succeeded - close modal and refresh
@@ -40,7 +58,18 @@ export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({ isOpen, onCl
       .filter(u => u.status === 'failed')
       .map(u => u.file);
 
-    await retryFailed(failedFiles);
+    await retryFailed(failedFiles, effectiveGallery);
+  };
+
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === '__new__') {
+      setIsCreatingNew(true);
+      setSelectedGallery('');
+    } else {
+      setIsCreatingNew(false);
+      setSelectedGallery(value);
+    }
   };
 
   const totalFiles = uploads.length || selectedFiles.length;
@@ -78,11 +107,39 @@ export const BatchUploadModal: React.FC<BatchUploadModalProps> = ({ isOpen, onCl
                 )}
               </div>
 
+              <div className="gallery-select-area">
+                <label htmlFor="gallery-select" className="gallery-select-label">
+                  Upload to Gallery:
+                </label>
+                <select
+                  id="gallery-select"
+                  value={isCreatingNew ? '__new__' : selectedGallery}
+                  onChange={handleGalleryChange}
+                  className="gallery-select-dropdown"
+                >
+                  <option value="">Uncategorized</option>
+                  {existingGalleries.map(gallery => (
+                    <option key={gallery} value={gallery}>{gallery}</option>
+                  ))}
+                  <option value="__new__">+ Create New Gallery</option>
+                </select>
+                {isCreatingNew && (
+                  <input
+                    type="text"
+                    value={newGalleryName}
+                    onChange={(e) => setNewGalleryName(e.target.value)}
+                    placeholder="Enter new gallery name"
+                    className="new-gallery-input"
+                    autoFocus
+                  />
+                )}
+              </div>
+
               <div className="batch-upload-actions">
                 <button onClick={onClose} className="btn-secondary">Cancel</button>
                 <button
                   onClick={handleUpload}
-                  disabled={selectedFiles.length === 0}
+                  disabled={selectedFiles.length === 0 || (isCreatingNew && !newGalleryName.trim())}
                   className="btn-primary"
                 >
                   Upload {selectedFiles.length} Photo(s)

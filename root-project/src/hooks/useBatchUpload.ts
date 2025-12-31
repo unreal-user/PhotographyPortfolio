@@ -18,7 +18,7 @@ export const useBatchUpload = () => {
   const [uploads, setUploads] = useState<Map<string, UploadProgress>>(new Map());
   const [isUploading, setIsUploading] = useState(false);
 
-  const uploadFiles = useCallback(async (files: File[]): Promise<BatchUploadResult> => {
+  const uploadFiles = useCallback(async (files: File[], gallery: string = 'Uncategorized'): Promise<BatchUploadResult> => {
     setIsUploading(true);
 
     const uploadMap = new Map<string, UploadProgress>();
@@ -98,7 +98,7 @@ export const useBatchUpload = () => {
             title: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
             description: '',
             alt: file.name,
-            gallery: 'Uncategorized'
+            gallery
           });
 
           // Success
@@ -146,14 +146,14 @@ export const useBatchUpload = () => {
     return { succeeded, failed };
   }, []);
 
-  const retryFailed = useCallback(async (files: File[]): Promise<BatchUploadResult> => {
+  const retryFailed = useCallback(async (files: File[], gallery: string = 'Uncategorized'): Promise<BatchUploadResult> => {
     // Filter to only retry files that exist in uploads map and failed
     const filesToRetry = files.filter(file => {
       const upload = uploads.get(file.name);
       return upload?.status === 'failed';
     });
 
-    return uploadFiles(filesToRetry);
+    return uploadFiles(filesToRetry, gallery);
   }, [uploads, uploadFiles]);
 
   const clearUploads = useCallback(() => {

@@ -255,17 +255,18 @@ const AdminDashboard: React.FC = () => {
 
   const hasSelection = selectedPhotoIds.size > 0;
 
-  // Extract unique galleries from current photos
+  // Extract unique galleries from current photos (including Uncategorized)
   const galleries = Array.from(new Set(
     photos
-      .map(p => p.gallery)
-      .filter(g => g && g !== '')
+      .map(p => p.gallery || 'Uncategorized')
+      .filter(g => g !== '')
   )).sort();
 
   // Filter photos by search query and gallery
   const filteredPhotos = photos.filter((photo) => {
     const matchesSearch = photo.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesGallery = !selectedGallery || photo.gallery === selectedGallery;
+    const photoGallery = photo.gallery || 'Uncategorized';
+    const matchesGallery = !selectedGallery || photoGallery === selectedGallery;
     return matchesSearch && matchesGallery;
   });
 
@@ -515,6 +516,7 @@ const AdminDashboard: React.FC = () => {
         isOpen={showBatchUploadModal}
         onClose={() => setShowBatchUploadModal(false)}
         onComplete={loadPhotos}
+        existingGalleries={galleries.filter(g => g !== 'Uncategorized')}
       />
 
       <HeroSettingsModal

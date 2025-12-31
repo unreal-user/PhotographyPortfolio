@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import type { Photo } from '../interfaces/Photo';
 import { photoApi } from '../services/photoApi';
 import { MasonryGallery } from '../components/MasonryGallery/MasonryGallery';
@@ -17,6 +18,16 @@ const PortfolioPage: React.FC = () => {
   const [selectedGallery, setSelectedGallery] = useState<Gallery | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const location = useLocation();
+
+  // Reset to gallery list when navigating to portfolio via header
+  useEffect(() => {
+    const state = location.state as { resetKey?: number } | null;
+    if (state?.resetKey) {
+      setSelectedGallery(null);
+      window.scrollTo(0, 0);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     loadGalleries();
