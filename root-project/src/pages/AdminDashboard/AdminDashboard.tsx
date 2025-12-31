@@ -16,6 +16,7 @@ const AdminDashboard: React.FC = () => {
   // State
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,6 +46,7 @@ const AdminDashboard: React.FC = () => {
     if (activeTab !== 'settings') {
       loadPhotos();
       setSelectedPhotoIds(new Set()); // Clear selection on tab change
+      setSearchQuery(''); // Clear search on tab change
     }
   }, [activeTab]);
 
@@ -79,11 +81,11 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  const handleSelectAll = () => {
-    if (selectedPhotoIds.size === photos.length) {
+  const handleSelectAll = (filteredPhotos: Photo[]) => {
+    if (selectedPhotoIds.size === filteredPhotos.length && filteredPhotos.length > 0) {
       setSelectedPhotoIds(new Set());
     } else {
-      setSelectedPhotoIds(new Set(photos.map(p => p.photoId)));
+      setSelectedPhotoIds(new Set(filteredPhotos.map(p => p.photoId)));
     }
   };
 
@@ -251,6 +253,11 @@ const AdminDashboard: React.FC = () => {
 
   const hasSelection = selectedPhotoIds.size > 0;
 
+  // Filter photos by search query
+  const filteredPhotos = photos.filter((photo) =>
+    photo.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="admin-dashboard">
       <div className="admin-dashboard-header">
@@ -259,8 +266,8 @@ const AdminDashboard: React.FC = () => {
           {hasSelection ? (
             <>
               <span className="selection-count">{selectedPhotoIds.size} selected</span>
-              <button type="button" className="btn-select-all" onClick={handleSelectAll}>
-                {selectedPhotoIds.size === photos.length ? 'Deselect All' : 'Select All'}
+              <button type="button" className="btn-select-all" onClick={() => handleSelectAll(filteredPhotos)}>
+                {selectedPhotoIds.size === filteredPhotos.length && filteredPhotos.length > 0 ? 'Deselect All' : 'Select All'}
               </button>
               {activeTab === 'archived' ? (
                 <button type="button" className="btn-bulk-action btn-bulk-action--danger" onClick={handleBulkDelete}>
@@ -282,7 +289,7 @@ const AdminDashboard: React.FC = () => {
             </>
           ) : (
             <>
-              <button type="button" className="btn-select-all" onClick={handleSelectAll}>
+              <button type="button" className="btn-select-all" onClick={() => handleSelectAll(filteredPhotos)}>
                 Select All
               </button>
               <button type="button" className="admin-dashboard-upload-button" onClick={handleUploadClick}>
@@ -323,6 +330,29 @@ const AdminDashboard: React.FC = () => {
           Settings
         </button>
       </div>
+
+      {/* Search Bar - Only show when not in settings tab */}
+      {activeTab !== 'settings' && (
+        <div className="admin-dashboard-search">
+          <input
+            type="text"
+            placeholder="Search photos by title..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="admin-dashboard-search-input"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="admin-dashboard-search-clear"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="admin-dashboard-error" role="alert">
@@ -374,9 +404,26 @@ const AdminDashboard: React.FC = () => {
             </button>
           )}
         </div>
+      ) : filteredPhotos.length === 0 ? (
+        <div className="admin-dashboard-empty">
+          <p>No photos match your search.</p>
+          <button
+            type="button"
+            className="admin-dashboard-upload-button"
+            onClick={() => setSearchQuery('')}
+          >
+            Clear Search
+          </button>
+        </div>
       ) : (
-        <div className="admin-dashboard-grid">
-          {photos.map((photo) => (
+        <>
+          {searchQuery && (
+            <div className="admin-dashboard-search-results">
+              Showing {filteredPhotos.length} of {photos.length} photos
+            </div>
+          )}
+          <div className="admin-dashboard-grid">
+            {filteredPhotos.map((photo) => (
             <PhotoCard
               key={photo.photoId}
               photo={photo}
@@ -388,7 +435,8 @@ const AdminDashboard: React.FC = () => {
               onSelect={handleSelect}
             />
           ))}
-        </div>
+          </div>
+        </>
       )}
 
       <ConfirmDialog
