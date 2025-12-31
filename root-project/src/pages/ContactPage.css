@@ -179,6 +179,22 @@
 
 /* Dark Mode */
 @media (prefers-color-scheme: dark) {
+  .form-label {
+    color: var(--color-text-primary);
+  }
+
+  .form-input,
+  .form-textarea {
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-primary);
+    border-color: var(--color-border);
+  }
+
+  .form-input::placeholder,
+  .form-textarea::placeholder {
+    color: var(--color-text-secondary);
+  }
+
   .form-success {
     background-color: #1e4620;
     border-color: #2d6930;
@@ -190,6 +206,35 @@
     border-color: #6d2c2c;
     color: #f5c2c7;
   }
+}
+
+/* Manual dark theme support */
+:root[data-theme="dark"] .form-label {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .form-input,
+:root[data-theme="dark"] .form-textarea {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  border-color: var(--color-border);
+}
+
+:root[data-theme="dark"] .form-input::placeholder,
+:root[data-theme="dark"] .form-textarea::placeholder {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .form-success {
+  background-color: #1e4620;
+  border-color: #2d6930;
+  color: #a3d9a5;
+}
+
+:root[data-theme="dark"] .form-error {
+  background-color: #4a1e1e;
+  border-color: #6d2c2c;
+  color: #f5c2c7;
 }
 
 /* Responsive Design */

@@ -373,3 +373,132 @@ export interface UpdateAboutSettingsRequest {
   sections: AboutSection[];
   fitImageToContainer?: boolean;
 }
+
+// ============================================================================
+// Contact Settings Types
+// ============================================================================
+
+export interface ContactSettings {
+  settingId: 'contact';
+  heroPhotoId?: string | null;
+  heroImageUrl?: string | null;
+  title: string;
+  subtitle: string;
+  fitImageToContainer?: boolean;
+  updatedAt?: string;
+}
+
+export interface UpdateContactSettingsRequest {
+  heroPhotoId?: string;
+  title: string;
+  subtitle: string;
+  fitImageToContainer?: boolean;
+}
+
+// ============================================================================
+// General Settings Types
+// ============================================================================
+
+export type ThemeMode = 'auto' | 'light' | 'dark';
+
+export interface GeneralSettings {
+  settingId: 'general';
+  theme: ThemeMode;
+  updatedAt?: string;
+}
+
+export interface UpdateGeneralSettingsRequest {
+  theme: ThemeMode;
+}
+
+// ============================================================================
+// Extended Settings API
+// ============================================================================
+
+export const extendedSettingsApi = {
+  /**
+   * Get contact page settings (public endpoint)
+   */
+  async getContactSettings(): Promise<ContactSettings> {
+    const response = await fetch(`${API_BASE_URL}/settings/contact`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      // Return defaults if not found
+      if (response.status === 404) {
+        return {
+          settingId: 'contact',
+          title: 'Get In Touch',
+          subtitle: "Let's create something beautiful together",
+          fitImageToContainer: false,
+        };
+      }
+      throw new Error('Failed to load contact settings');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Update contact page settings (protected endpoint)
+   */
+  async updateContactSettings(settings: UpdateContactSettingsRequest): Promise<{ settingId: string; updatedAt: string; message: string }> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/settings/contact`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(settings),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to update settings' }));
+      throw new Error(error.error || 'Failed to update settings');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Get general settings (public endpoint)
+   */
+  async getGeneralSettings(): Promise<GeneralSettings> {
+    const response = await fetch(`${API_BASE_URL}/settings/general`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      // Return defaults if not found
+      if (response.status === 404) {
+        return {
+          settingId: 'general',
+          theme: 'auto',
+        };
+      }
+      throw new Error('Failed to load general settings');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Update general settings (protected endpoint)
+   */
+  async updateGeneralSettings(settings: UpdateGeneralSettingsRequest): Promise<{ settingId: string; updatedAt: string; message: string }> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/settings/general`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(settings),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to update settings' }));
+      throw new Error(error.error || 'Failed to update settings');
+    }
+
+    return response.json();
+  },
+};

@@ -8,6 +8,8 @@ import { BatchUploadModal } from '../../components/BatchUploadModal/BatchUploadM
 import { AssignGalleryModal } from '../../components/AssignGalleryModal/AssignGalleryModal';
 import HeroSettingsModal from '../../components/HeroSettingsModal/HeroSettingsModal';
 import AboutSettingsModal from '../../components/AboutSettingsModal/AboutSettingsModal';
+import ContactSettingsModal from '../../components/ContactSettingsModal/ContactSettingsModal';
+import GeneralSettingsModal from '../../components/GeneralSettingsModal/GeneralSettingsModal';
 import './AdminDashboard.css';
 
 type PhotoStatus = 'pending' | 'published' | 'archived';
@@ -29,6 +31,8 @@ const AdminDashboard: React.FC = () => {
   const [showAssignGalleryModal, setShowAssignGalleryModal] = useState(false);
   const [showHeroSettingsModal, setShowHeroSettingsModal] = useState(false);
   const [showAboutSettingsModal, setShowAboutSettingsModal] = useState(false);
+  const [showContactSettingsModal, setShowContactSettingsModal] = useState(false);
+  const [showGeneralSettingsModal, setShowGeneralSettingsModal] = useState(false);
 
   // Modal states
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
@@ -391,6 +395,18 @@ const AdminDashboard: React.FC = () => {
       {activeTab === 'settings' ? (
         <div className="admin-dashboard-settings">
           <div className="admin-settings-card">
+            <h3>General</h3>
+            <p>Site-wide settings including theme preferences.</p>
+            <button
+              type="button"
+              className="admin-dashboard-upload-button"
+              onClick={() => setShowGeneralSettingsModal(true)}
+            >
+              Edit General Settings
+            </button>
+          </div>
+
+          <div className="admin-settings-card">
             <h3>Home Page</h3>
             <p>Configure the main image, title, and subtitle shown on the homepage.</p>
             <button
@@ -411,6 +427,30 @@ const AdminDashboard: React.FC = () => {
               onClick={() => setShowAboutSettingsModal(true)}
             >
               Edit About Page Settings
+            </button>
+          </div>
+
+          <div className="admin-settings-card">
+            <h3>Portfolio Page</h3>
+            <p>Configure the Portfolio page layout and gallery display options.</p>
+            <button
+              type="button"
+              className="admin-dashboard-upload-button"
+              disabled
+            >
+              Coming Soon
+            </button>
+          </div>
+
+          <div className="admin-settings-card">
+            <h3>Contact Page</h3>
+            <p>Configure the Contact page hero image and text.</p>
+            <button
+              type="button"
+              className="admin-dashboard-upload-button"
+              onClick={() => setShowContactSettingsModal(true)}
+            >
+              Edit Contact Page Settings
             </button>
           </div>
         </div>
@@ -532,6 +572,18 @@ const AdminDashboard: React.FC = () => {
         isOpen={showAboutSettingsModal}
         onClose={() => setShowAboutSettingsModal(false)}
         onSettingsUpdated={() => setShowAboutSettingsModal(false)}
+      />
+
+      <ContactSettingsModal
+        isOpen={showContactSettingsModal}
+        onClose={() => setShowContactSettingsModal(false)}
+        onSettingsUpdated={() => setShowContactSettingsModal(false)}
+      />
+
+      <GeneralSettingsModal
+        isOpen={showGeneralSettingsModal}
+        onClose={() => setShowGeneralSettingsModal(false)}
+        onSettingsUpdated={() => setShowGeneralSettingsModal(false)}
       />
     </div>
   );
