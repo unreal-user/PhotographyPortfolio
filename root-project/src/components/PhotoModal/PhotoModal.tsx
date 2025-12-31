@@ -13,6 +13,7 @@ export const PhotoModal: React.FC<PhotoModalProps> = ({ photo, onClose, onBackdr
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [hasDragged, setHasDragged] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
 
   // Reset zoom when photo changes
@@ -56,6 +57,7 @@ export const PhotoModal: React.FC<PhotoModalProps> = ({ photo, onClose, onBackdr
     if (scale > 1) {
       e.preventDefault(); // Prevent default drag behavior
       setIsDragging(true);
+      setHasDragged(false); // Reset drag flag
       setDragStart({
         x: e.clientX - position.x,
         y: e.clientY - position.y,
@@ -65,6 +67,7 @@ export const PhotoModal: React.FC<PhotoModalProps> = ({ photo, onClose, onBackdr
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging && scale > 1) {
+      setHasDragged(true); // Mark that user has dragged
       setPosition({
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y,
@@ -78,11 +81,10 @@ export const PhotoModal: React.FC<PhotoModalProps> = ({ photo, onClose, onBackdr
 
   const handleImageClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Toggle between fit and 2x zoom
-    if (scale === 1) {
+    // Only zoom in when at 1x, and only if user didn't just drag
+    // When zoomed, only the reset button can unzoom
+    if (scale === 1 && !hasDragged) {
       setScale(2);
-    } else {
-      handleReset();
     }
   };
 

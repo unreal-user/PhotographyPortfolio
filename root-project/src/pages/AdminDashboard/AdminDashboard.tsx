@@ -270,9 +270,14 @@ const AdminDashboard: React.FC = () => {
                 {selectedPhotoIds.size === filteredPhotos.length && filteredPhotos.length > 0 ? 'Deselect All' : 'Select All'}
               </button>
               {activeTab === 'archived' ? (
-                <button type="button" className="btn-bulk-action btn-bulk-action--danger" onClick={handleBulkDelete}>
-                  Delete Selected
-                </button>
+                <>
+                  <button type="button" className="btn-bulk-action" onClick={handleBulkPublish}>
+                    Publish Selected
+                  </button>
+                  <button type="button" className="btn-bulk-action btn-bulk-action--danger" onClick={handleBulkDelete}>
+                    Delete Selected
+                  </button>
+                </>
               ) : (
                 <>
                   <button type="button" className="btn-bulk-action" onClick={handleBulkPublish}>
@@ -429,7 +434,7 @@ const AdminDashboard: React.FC = () => {
               photo={photo}
               onView={() => handleView(photo)}
               onEdit={() => handleEdit(photo)}
-              onPublish={photo.status === 'pending' ? () => handlePublish(photo) : undefined}
+              onPublish={photo.status === 'pending' || photo.status === 'archived' ? () => handlePublish(photo) : undefined}
               onArchive={() => handleArchive(photo)}
               isSelected={selectedPhotoIds.has(photo.photoId)}
               onSelect={handleSelect}

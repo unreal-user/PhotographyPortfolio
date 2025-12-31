@@ -105,16 +105,9 @@ def lambda_handler(event, context):
         except Exception as e:
             print(f"Warning: Could not delete original {source_key}: {str(e)}")
 
-        # Delete thumbnail and display versions (save space, can regenerate if restored)
-        try:
-            s3_client.delete_object(Bucket=bucket, Key=thumbnail_key)
-        except Exception as e:
-            print(f"Warning: Could not delete thumbnail {thumbnail_key}: {str(e)}")
-
-        try:
-            s3_client.delete_object(Bucket=bucket, Key=display_key)
-        except Exception as e:
-            print(f"Warning: Could not delete display {display_key}: {str(e)}")
+        # Keep thumbnail and display versions when archiving
+        # This allows archived photos to be used as hero images
+        # They will be deleted only during permanent deletion
 
         # Update status to archived
         now_decimal = json.loads(json.dumps(now), parse_float=Decimal)
