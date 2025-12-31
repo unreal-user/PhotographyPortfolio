@@ -16,16 +16,16 @@
   display: block;
 }
 
-/* Responsive breakpoints */
+/* Responsive breakpoints - use !important to override inline styles */
 @media (max-width: 1024px) {
   .masonry-gallery {
-    --masonry-columns: 2;
+    column-count: 2 !important;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .masonry-gallery {
-    --masonry-columns: 1;
+    column-count: 1 !important;
     padding: var(--space-md);
   }
 }
