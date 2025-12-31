@@ -25,7 +25,7 @@ interface CreatePhotoRequest {
   title: string;
   description?: string;
   alt: string;
-  copyright: string;
+  copyright?: string; // Optional - auto-generated on backend if not provided
   gallery?: string;
 }
 
