@@ -140,6 +140,39 @@ def lambda_handler(event, context):
                 if 'Item' not in photo_response:
                     return error_response(400, 'Photo not found', 'ValidationError', allowed_origin)
 
+        # Validate contact settings
+        if setting_id == 'contact':
+            contact_photo_id = body.get('heroPhotoId')
+
+            # Validate required fields
+            if not body.get('title'):
+                return error_response(400, 'Title is required', 'ValidationError', allowed_origin)
+            if not body.get('subtitle'):
+                return error_response(400, 'Subtitle is required', 'ValidationError', allowed_origin)
+
+            # Validate fitImageToContainer if provided
+            if 'fitImageToContainer' in body:
+                if not isinstance(body.get('fitImageToContainer'), bool):
+                    return error_response(400, 'fitImageToContainer must be a boolean', 'ValidationError', allowed_origin)
+
+            # Validate photo exists (allow any status: pending, published, or archived)
+            if contact_photo_id:
+                photos_table = dynamodb.Table(os.environ['PHOTOS_TABLE_NAME'])
+                photo_response = photos_table.get_item(
+                    Key={'photoId': contact_photo_id}
+                )
+
+                if 'Item' not in photo_response:
+                    return error_response(400, 'Photo not found', 'ValidationError', allowed_origin)
+
+        # Validate general settings
+        if setting_id == 'general':
+            theme = body.get('theme')
+
+            # Validate theme value
+            if theme not in ['auto', 'light', 'dark']:
+                return error_response(400, 'Theme must be auto, light, or dark', 'ValidationError', allowed_origin)
+
         # Update settings in DynamoDB
         settings_table = dynamodb.Table(os.environ['SITE_SETTINGS_TABLE_NAME'])
         now = datetime.utcnow().isoformat() + 'Z'
