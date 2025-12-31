@@ -1,7 +1,7 @@
 # Photography Portfolio - Project Status
 
-**Last Updated:** 2025-12-28
-**Current Phase:** Phase 6 Complete → Ready for Phase 7
+**Last Updated:** 2025-12-31
+**Current Phase:** Phase 8 Complete (Testing + CI/CD)
 **Branch:** defects
 **Environment:** tmpfs (temporary filesystem - must commit regularly!)
 
@@ -11,7 +11,7 @@
 
 **Target:** Production-ready photography portfolio hosted on AWS S3 with CloudFront CDN
 
-**Progress:** ~90% (Phases 0-6 complete - full stack operational)
+**Progress:** ~95% (Phases 0-8 complete - full stack with testing & CI/CD)
 
 ---
 
@@ -63,8 +63,8 @@
 | **Phase 4** | ✅ **COMPLETE** | Photo storage (S3 + DynamoDB) |
 | **Phase 5** | ✅ **COMPLETE** | API Gateway + Lambda functions |
 | **Phase 6** | ✅ **COMPLETE** | Admin dashboard, photo upload, galleries, SES contact form |
-| **Phase 7** | ⏳ **NEXT** | Image processing + thumbnails (Lambda Layer) |
-| **Phase 8** | ⏳ Pending | CI/CD deployment pipeline |
+| **Phase 7** | ✅ **COMPLETE** | Image processing + thumbnails (Lambda Layer) |
+| **Phase 8** | ✅ **COMPLETE** | Testing + CI/CD deployment pipeline |
 
 ### Phase 0 Details (COMPLETE)
 **Date Completed:** Prior to 2025-12-17
@@ -317,12 +317,56 @@
 
 **Documentation:** `PHASE_6D_PLAN.md`
 
+### Phase 8 Details (COMPLETE)
+**Date Completed:** 2025-12-31
+**Status:** Complete
+
+**Testing Infrastructure:**
+- Vitest test runner with React Testing Library
+- Unit tests for components (Hero, PhotoThumbnail)
+- API service tests with mocked fetch
+- Code coverage reporting (v8)
+- Test setup with jsdom environment
+
+**CI/CD Pipeline (GitHub Actions):**
+- `ci.yml` - Runs on push/PR to main:
+  - Lint code with ESLint
+  - Run tests with coverage
+  - Build application
+  - Build Lambda packages
+  - Terraform plan (PRs only)
+
+- `deploy.yml` - Manual workflow dispatch:
+  - Build and deploy infrastructure (Terraform)
+  - Build and deploy frontend to S3
+  - CloudFront cache invalidation
+
+**Monorepo Scripts (root package.json):**
+- `npm run dev` - Start development server
+- `npm run build` - Build frontend
+- `npm run test` - Run tests
+- `npm run lint` - Lint code
+- `npm run build:lambdas` - Build Lambda packages
+- `npm run tf:plan` - Terraform plan
+- `npm run tf:apply` - Terraform apply
+- `npm run yeet` - Build and deploy site to S3
+- `npm run deploy` - Full deployment (lambdas + terraform + site)
+
+**Files Created:**
+- `package.json` (root) - Monorepo scripts
+- `scripts/build-lambdas.js` - Lambda packaging script
+- `.github/workflows/ci.yml` - CI pipeline
+- `.github/workflows/deploy.yml` - Deployment pipeline
+- `root-project/vitest.config.ts` - Test configuration
+- `root-project/src/test/setup.ts` - Test setup
+- Component and service unit tests
+
 ---
 
 ## 🔄 Next Steps
 
-1. **Phase 7** - Image processing + thumbnail generation
-2. **Phase 8** - CI/CD deployment pipeline
+1. **Add more tests** - Increase test coverage for components and services
+2. **E2E testing** - Add Playwright or Cypress for end-to-end tests
 3. **General cleanup** - Remove dead code, consolidate components
 4. **Performance optimization** - Lazy loading, image optimization
 5. **SEO optimization** - Meta tags, sitemap, structured data
@@ -341,9 +385,9 @@
 
 ## 📊 Completion Status
 
-- **Phases 0-6:** ✅ Complete (deployed and operational)
-- **Phase 7 (Thumbnails):** Pending
-- **Phase 8 (CI/CD):** Pending
+- **Phases 0-8:** ✅ Complete (deployed and operational)
+- **Testing:** ✅ Unit tests configured with Vitest
+- **CI/CD:** ✅ GitHub Actions pipelines configured
 - **Production Status:** Live and functional
 
 ---

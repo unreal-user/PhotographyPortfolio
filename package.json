@@ -1,0 +1,32 @@
+{
+  "name": "photography-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Photography Portfolio - AWS serverless application",
+  "scripts": {
+    "dev": "npm run dev --prefix root-project",
+    "build": "npm run build --prefix root-project",
+    "test": "npm run test --prefix root-project",
+    "test:ci": "npm run test:ci --prefix root-project",
+    "lint": "npm run lint --prefix root-project",
+    "yeet": "npm run yeet --prefix root-project",
+    "build:lambdas": "node scripts/build-lambdas.js",
+    "tf:init": "cd terraform/photography-app && terraform init",
+    "tf:plan": "cd terraform/photography-app && terraform plan",
+    "tf:apply": "cd terraform/photography-app && terraform apply",
+    "tf:apply:auto": "cd terraform/photography-app && terraform apply -auto-approve",
+    "deploy": "npm run build:lambdas && npm run tf:apply && npm run yeet",
+    "deploy:site": "npm run yeet",
+    "deploy:infra": "npm run build:lambdas && npm run tf:apply"
+  },
+  "keywords": [
+    "photography",
+    "portfolio",
+    "aws",
+    "serverless",
+    "react",
+    "terraform"
+  ],
+  "author": "",
+  "license": "MIT"
+}
