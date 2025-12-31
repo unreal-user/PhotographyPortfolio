@@ -10,15 +10,11 @@ export interface PhotoModalProps {
 
 export const PhotoModal: React.FC<PhotoModalProps> = ({ photo, onClose, onBackdropClick }) => {
   const [scale, setScale] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const imageRef = useRef<HTMLImageElement>(null);
 
   // Reset zoom when photo changes
   useEffect(() => {
     setScale(1);
-    setPosition({ x: 0, y: 0 });
   }, [photo.photoId]);
 
   const handleZoomIn = () => {
@@ -26,53 +22,17 @@ export const PhotoModal: React.FC<PhotoModalProps> = ({ photo, onClose, onBackdr
   };
 
   const handleZoomOut = () => {
-    setScale((prev) => {
-      const newScale = Math.max(prev - 0.5, 1);
-      if (newScale === 1) {
-        setPosition({ x: 0, y: 0 }); // Reset position when fully zoomed out
-      }
-      return newScale;
-    });
+    setScale((prev) => Math.max(prev - 0.5, 1));
   };
 
   const handleReset = () => {
     setScale(1);
-    setPosition({ x: 0, y: 0 });
   };
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setScale((prev) => {
-      const newScale = Math.max(1, Math.min(prev + delta, 4));
-      if (newScale === 1) {
-        setPosition({ x: 0, y: 0 });
-      }
-      return newScale;
-    });
-  };
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (scale > 1) {
-      setIsDragging(true);
-      setDragStart({
-        x: e.clientX - position.x,
-        y: e.clientY - position.y,
-      });
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isDragging && scale > 1) {
-      setPosition({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
+    setScale((prev) => Math.max(1, Math.min(prev + delta, 4)));
   };
 
   const handleImageClick = (e: React.MouseEvent) => {
@@ -125,10 +85,6 @@ export const PhotoModal: React.FC<PhotoModalProps> = ({ photo, onClose, onBackdr
           <div
             className={`modal-image-container ${scale > 1 ? 'zoomed' : ''}`}
             onWheel={handleWheel}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
           >
             <img
               ref={imageRef}
@@ -136,8 +92,8 @@ export const PhotoModal: React.FC<PhotoModalProps> = ({ photo, onClose, onBackdr
               alt={photo.alt}
               onClick={handleImageClick}
               style={{
-                transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
-                cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
+                transform: `scale(${scale})`,
+                cursor: scale === 1 ? 'zoom-in' : 'zoom-out',
               }}
             />
           </div>
