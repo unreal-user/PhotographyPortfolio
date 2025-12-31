@@ -5,6 +5,12 @@ from urllib.parse import unquote_plus
 from PIL import Image
 from io import BytesIO
 
+# Import AVIF plugin to register AVIF format support
+try:
+    import pillow_avif
+except ImportError:
+    print("Warning: pillow-avif-plugin not available, AVIF support disabled")
+
 s3_client = boto3.client('s3')
 
 # Image size configuration

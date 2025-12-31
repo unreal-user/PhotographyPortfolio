@@ -17,6 +17,7 @@ const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGallery, setSelectedGallery] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +48,7 @@ const AdminDashboard: React.FC = () => {
       loadPhotos();
       setSelectedPhotoIds(new Set()); // Clear selection on tab change
       setSearchQuery(''); // Clear search on tab change
+      setSelectedGallery(''); // Clear gallery filter on tab change
     }
   }, [activeTab]);
 
@@ -253,10 +255,19 @@ const AdminDashboard: React.FC = () => {
 
   const hasSelection = selectedPhotoIds.size > 0;
 
-  // Filter photos by search query
-  const filteredPhotos = photos.filter((photo) =>
-    photo.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Extract unique galleries from current photos
+  const galleries = Array.from(new Set(
+    photos
+      .map(p => p.gallery)
+      .filter(g => g && g !== '')
+  )).sort();
+
+  // Filter photos by search query and gallery
+  const filteredPhotos = photos.filter((photo) => {
+    const matchesSearch = photo.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesGallery = !selectedGallery || photo.gallery === selectedGallery;
+    return matchesSearch && matchesGallery;
+  });
 
   return (
     <div className="admin-dashboard">
@@ -336,25 +347,43 @@ const AdminDashboard: React.FC = () => {
         </button>
       </div>
 
-      {/* Search Bar - Only show when not in settings tab */}
+      {/* Search and Filter Bar - Only show when not in settings tab */}
       {activeTab !== 'settings' && (
-        <div className="admin-dashboard-search">
-          <input
-            type="text"
-            placeholder="Search photos by title..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="admin-dashboard-search-input"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              className="admin-dashboard-search-clear"
-              onClick={() => setSearchQuery('')}
-              aria-label="Clear search"
+        <div className="admin-dashboard-filters">
+          <div className="admin-dashboard-search">
+            <input
+              type="text"
+              placeholder="Search photos by title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="admin-dashboard-search-input"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="admin-dashboard-search-clear"
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Gallery Filter */}
+          {galleries.length > 0 && (
+            <select
+              value={selectedGallery}
+              onChange={(e) => setSelectedGallery(e.target.value)}
+              className="admin-dashboard-gallery-select"
             >
-              ×
-            </button>
+              <option value="">All Galleries</option>
+              {galleries.map((gallery) => (
+                <option key={gallery} value={gallery}>
+                  {gallery}
+                </option>
+              ))}
+            </select>
           )}
         </div>
       )}
@@ -446,7 +475,13 @@ const AdminDashboard: React.FC = () => {
 
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
-        title={confirmDialog.action === 'publish' ? 'Publish Photo?' : 'Archive Photo?'}
+        title={
+          confirmDialog.action === 'publish'
+            ? 'Publish Photo?'
+            : confirmDialog.photo?.status === 'archived'
+            ? 'Delete Photo?'
+            : 'Archive Photo?'
+        }
         message={
           confirmDialog.action === 'publish'
             ? 'This will move the photo from uploads/ to originals/ and make it visible on the public portfolio.'
@@ -454,7 +489,13 @@ const AdminDashboard: React.FC = () => {
             ? 'This will permanently delete the photo.'
             : 'This will move the photo to the archive. You can restore it later.'
         }
-        confirmLabel={confirmDialog.action === 'publish' ? 'Publish' : 'Archive'}
+        confirmLabel={
+          confirmDialog.action === 'publish'
+            ? 'Publish'
+            : confirmDialog.photo?.status === 'archived'
+            ? 'Delete'
+            : 'Archive'
+        }
         onConfirm={handleConfirmAction}
         onCancel={handleCancelAction}
         variant={confirmDialog.action === 'publish' ? 'info' : 'danger'}

@@ -21,7 +21,6 @@ const EditPhotoModal: React.FC<EditPhotoModalProps> = ({
     title: '',
     description: '',
     alt: '',
-    copyright: '',
     gallery: '',
   });
 
@@ -36,7 +35,6 @@ const EditPhotoModal: React.FC<EditPhotoModalProps> = ({
         title: photo.title,
         description: photo.description || '',
         alt: photo.alt,
-        copyright: photo.copyright,
         gallery: photo.gallery || '',
       });
       setError(null);
@@ -49,7 +47,6 @@ const EditPhotoModal: React.FC<EditPhotoModalProps> = ({
   const validateForm = (): string | null => {
     if (!formData.title.trim()) return 'Title is required';
     if (!formData.alt.trim()) return 'Alt text is required';
-    if (!formData.copyright.trim()) return 'Copyright is required';
     return null;
   };
 
@@ -77,7 +74,6 @@ const EditPhotoModal: React.FC<EditPhotoModalProps> = ({
         title: formData.title,
         description: formData.description || undefined,
         alt: formData.alt,
-        copyright: formData.copyright,
         gallery: formData.gallery || undefined,
       });
 
@@ -183,23 +179,6 @@ const EditPhotoModal: React.FC<EditPhotoModalProps> = ({
                 onChange={handleInputChange}
                 className="edit-form-input"
                 placeholder="Describe the image for accessibility"
-                disabled={isUpdating}
-                required
-              />
-            </div>
-
-            <div className="edit-form-group">
-              <label htmlFor="edit-copyright" className="edit-form-label">
-                Copyright <span className="edit-form-required">*</span>
-              </label>
-              <input
-                type="text"
-                id="edit-copyright"
-                name="copyright"
-                value={formData.copyright}
-                onChange={handleInputChange}
-                className="edit-form-input"
-                placeholder="© 2025 Your Name"
                 disabled={isUpdating}
                 required
               />

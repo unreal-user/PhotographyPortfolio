@@ -23,9 +23,10 @@ def lambda_handler(event, context):
         "title": "Sunset Photo",
         "description": "Optional description",
         "alt": "Alt text for accessibility",
-        "copyright": "© 2025 Photographer",
         "gallery": "Optional gallery name"
     }
+
+    Copyright is auto-generated as "(C) [current year] Cindy Ashley"
 
     Output:
     {
@@ -46,15 +47,18 @@ def lambda_handler(event, context):
         photo_id = body.get('photoId')
         title = body.get('title')
         alt = body.get('alt')
-        copyright = body.get('copyright')
 
         # Optional fields
         description = body.get('description', '')
         gallery = body.get('gallery', '')
 
+        # Auto-generate copyright with current year
+        current_year = datetime.utcnow().year
+        copyright = f"(C) {current_year} Cindy Ashley"
+
         # Validate required fields
-        if not all([photo_id, title, alt, copyright]):
-            missing = [f for f in ['photoId', 'title', 'alt', 'copyright']
+        if not all([photo_id, title, alt]):
+            missing = [f for f in ['photoId', 'title', 'alt']
                       if not body.get(f)]
             return error_response(400, f'Missing required fields: {", ".join(missing)}', 'ValidationError')
 
